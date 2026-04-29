@@ -49,7 +49,15 @@ export default function TeacherMonitor({ roomCode, onFinished, onBack }) {
       <div className="monitor-header">
         <div>
           <h2 className="monitor-title">{room.title}</h2>
-          <p className="muted">방 코드: {roomCode}</p>
+          <div className="monitor-codes">
+            <span className="muted">방 코드: <strong>{roomCode}</strong></span>
+            {room.class_code && (
+              <span className="class-code-bar">
+                <span className="class-code-bar-label">반 서재 코드</span>
+                <span className="class-code-bar-value">{room.class_code}</span>
+              </span>
+            )}
+          </div>
         </div>
         <div className="monitor-actions">
           <button className="btn btn-danger btn-sm" onClick={handleForceEnd} disabled={ending}>

@@ -48,7 +48,7 @@ export default function StoryFinished({ roomCode, isTeacher, onHome }) {
           <div className="cover-book-icon">📖</div>
           <h1 className="cover-title">{room.title}</h1>
           <div className="cover-divider">— — —</div>
-          <p className="cover-subtitle">우리가 함께 만든 릴레이 소설</p>
+          <p className="cover-subtitle">우리가 함께 만든 릴레이 서재</p>
           <div className="cover-authors">
             {room.player_order.map(id => (
               <span key={id} className="cover-author">{room.player_names[id]}</span>
@@ -70,7 +70,7 @@ export default function StoryFinished({ roomCode, isTeacher, onHome }) {
         {/* 마지막 페이지 푸터 */}
         <div className="print-footer">
           <p>이 소설은 {room.player_order.length}명의 학생이 함께 완성했습니다.</p>
-          <p>{today} · 릴레이 소설</p>
+          <p>{today} · 릴레이 서재</p>
         </div>
       </div>
 

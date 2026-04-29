@@ -62,6 +62,12 @@ export default function TeacherWait({ roomCode, onStarted, onBack }) {
           <p>📚 <strong>{roomData.title}</strong></p>
           {roomData.hint && <p className="muted">글감: {roomData.hint}</p>}
           <p className="muted">최대 {roomData.max_sentences}문장</p>
+          {roomData.class_code && (
+            <div className="class-code-bar">
+              <span className="class-code-bar-label">반 서재 코드</span>
+              <span className="class-code-bar-value">{roomData.class_code}</span>
+            </div>
+          )}
         </div>
       )}
 
