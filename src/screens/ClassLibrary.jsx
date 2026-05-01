@@ -20,7 +20,7 @@ function formatDate(ts) {
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
 }
 
-export default function ClassLibrary({ classCode, className, onRead, onBack }) {
+export default function ClassLibrary({ classCode, className, classId, onRead, onBack }) {
   const [stories, setStories] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -37,7 +37,7 @@ export default function ClassLibrary({ classCode, className, onRead, onBack }) {
     const { data } = await supabase
       .from('rooms')
       .select('code, title, player_order, player_names, created_at')
-      .eq('class_code', classCode)
+      .eq('class_id', classId)
       .eq('status', 'finished')
       .order('created_at', { ascending: false });
     setStories(data || []);

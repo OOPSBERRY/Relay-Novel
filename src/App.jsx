@@ -19,6 +19,7 @@ export default function App() {
   const [isTeacher, setIsTeacher] = useState(false);
   const [classCode, setClassCode] = useState('');
   const [className, setClassName] = useState('');
+  const [classId, setClassId] = useState('');
   const [readingCode, setReadingCode] = useState('');
 
   function reset() {
@@ -68,7 +69,7 @@ export default function App() {
     ),
     'class-setup': (
       <ClassSetup
-        onEnter={(code, name) => { setClassCode(code); setClassName(name); setScreen('class-library'); }}
+        onEnter={(code, name, id) => { setClassCode(code); setClassName(name); setClassId(id); setScreen('class-library'); }}
         onBack={() => setScreen('home')}
       />
     ),
@@ -76,6 +77,7 @@ export default function App() {
       <ClassLibrary
         classCode={classCode}
         className={className}
+        classId={classId}
         onRead={(code) => { setReadingCode(code); setScreen('story-reader'); }}
         onBack={() => setScreen('class-setup')}
       />
