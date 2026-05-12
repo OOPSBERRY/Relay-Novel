@@ -55,13 +55,13 @@ export default function ClassSetup({ onEnter, onBack }) {
           autoFocus
         />
 
-        <label>비밀번호</label>
+        <label>반 서재 비밀번호</label>
         <input
           type="password"
           value={password}
           onChange={e => setPassword(e.target.value.slice(0, 20))}
           onKeyDown={e => e.key === 'Enter' && handleEnter()}
-          placeholder="선생님이 알려준 비밀번호"
+          placeholder="선생님이 알려준 반 서재 비밀번호"
         />
 
         {error && <p className="error">{error}</p>}

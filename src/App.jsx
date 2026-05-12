@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from './supabase';
 import Home from './screens/Home';
 import TeacherEntry from './screens/TeacherEntry';
 import TeacherWait from './screens/TeacherWait';
@@ -11,6 +12,8 @@ import ClassSetup from './screens/ClassSetup';
 import ClassLibrary from './screens/ClassLibrary';
 import StoryReader from './screens/StoryReader';
 
+const SESSION_KEY = 'relay_student_session';
+
 export default function App() {
   const [screen, setScreen] = useState('home');
   const [roomCode, setRoomCode] = useState('');
@@ -21,11 +24,60 @@ export default function App() {
   const [className, setClassName] = useState('');
   const [classId, setClassId] = useState('');
   const [readingCode, setReadingCode] = useState('');
+  const [recovering, setRecovering] = useState(true);
+
+  // 새로고침 복구: 진행 중인 방이면 자동으로 글쓰기 화면으로
+  useEffect(() => {
+    async function tryRecover() {
+      const saved = sessionStorage.getItem(SESSION_KEY);
+      if (!saved) { setRecovering(false); return; }
+
+      try {
+        const { roomCode: rc, myId: id, myName: name } = JSON.parse(saved);
+        const { data } = await supabase.from('rooms').select('status').eq('code', rc).single();
+
+        if (data?.status === 'playing') {
+          setRoomCode(rc);
+          setMyId(id);
+          setMyName(name);
+          setScreen('student-write');
+        } else {
+          sessionStorage.removeItem(SESSION_KEY);
+        }
+      } catch {
+        sessionStorage.removeItem(SESSION_KEY);
+      }
+      setRecovering(false);
+    }
+    tryRecover();
+  }, []);
 
   function reset() {
+    sessionStorage.removeItem(SESSION_KEY);
     setScreen('home');
     setRoomCode(''); setMyId(''); setMyName('');
     setIsTeacher(false);
+  }
+
+  function handleStudentJoined(code, id, name) {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ roomCode: code, myId: id, myName: name }));
+    setRoomCode(code); setMyId(id); setMyName(name);
+    setScreen('student-wait');
+  }
+
+  function handleStudentFinished() {
+    sessionStorage.removeItem(SESSION_KEY);
+    setScreen('story-finished');
+  }
+
+  if (recovering) {
+    return (
+      <div className="app">
+        <div className="screen screen-center">
+          <p className="muted">불러오는 중...</p>
+        </div>
+      </div>
+    );
   }
 
   const screens = {
@@ -53,16 +105,13 @@ export default function App() {
       <TeacherMonitor roomCode={roomCode} onFinished={() => setScreen('story-finished')} onBack={reset} />
     ),
     'student-join': (
-      <StudentJoin
-        onJoined={(code, id, name) => { setRoomCode(code); setMyId(id); setMyName(name); setScreen('student-wait'); }}
-        onBack={() => setScreen('home')}
-      />
+      <StudentJoin onJoined={handleStudentJoined} onBack={() => setScreen('home')} />
     ),
     'student-wait': (
       <StudentWait roomCode={roomCode} myId={myId} myName={myName} onStarted={() => setScreen('student-write')} />
     ),
     'student-write': (
-      <StudentWrite roomCode={roomCode} myId={myId} myName={myName} onFinished={() => setScreen('story-finished')} />
+      <StudentWrite roomCode={roomCode} myId={myId} myName={myName} onFinished={handleStudentFinished} />
     ),
     'story-finished': (
       <StoryFinished roomCode={roomCode} isTeacher={isTeacher} onHome={reset} />
