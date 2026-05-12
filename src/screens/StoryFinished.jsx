@@ -1,9 +1,17 @@
 import { useState, useEffect } from 'react';
+import confetti from 'canvas-confetti';
 import { supabase } from '../supabase';
 
 export default function StoryFinished({ roomCode, isTeacher, onHome }) {
   const [room, setRoom] = useState(null);
   const [sentences, setSentences] = useState([]);
+
+  useEffect(() => {
+    // 색종이 효과
+    confetti({ particleCount: 80, spread: 70, origin: { x: 0.2, y: 0.6 }, colors: ['#8B4FE8', '#FFE033', '#F093FB', '#4FACFE', '#43E97B'] });
+    setTimeout(() => confetti({ particleCount: 80, spread: 70, origin: { x: 0.8, y: 0.6 }, colors: ['#8B4FE8', '#FFE033', '#F093FB', '#4FACFE', '#43E97B'] }), 300);
+    setTimeout(() => confetti({ particleCount: 60, spread: 100, origin: { x: 0.5, y: 0.4 }, colors: ['#8B4FE8', '#FFE033', '#F093FB'] }), 700);
+  }, []);
 
   useEffect(() => {
     async function load() {
