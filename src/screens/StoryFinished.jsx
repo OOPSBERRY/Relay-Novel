@@ -50,9 +50,11 @@ export default function StoryFinished({ roomCode, isTeacher, onHome }) {
         <h2>소설 완성!</h2>
         <p className="muted">{sentences.length}개의 문장으로 완성된 우리들의 이야기</p>
         <div className="finished-actions">
-          <button className="btn btn-readaloud" onClick={() => setReadAloud(true)}>
-            📖 낭독 모드
-          </button>
+          {isTeacher && (
+            <button className="btn btn-readaloud" onClick={() => setReadAloud(true)}>
+              📖 낭독 모드
+            </button>
+          )}
           <button className="btn btn-print" onClick={handlePrint}>
             🖨️ PDF로 저장 / 인쇄
           </button>
