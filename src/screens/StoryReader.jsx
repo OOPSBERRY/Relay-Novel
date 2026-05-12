@@ -24,7 +24,7 @@ export default function StoryReader({ roomCode, onBack }) {
     async function load() {
       const [{ data: r }, { data: s }] = await Promise.all([
         supabase.from('rooms').select('*').eq('code', roomCode).single(),
-        supabase.from('sentences').select('*').eq('room_code', roomCode).order('order_index'),
+        supabase.from('sentences').select('*').eq('room_code', roomCode).eq('skipped', false).order('order_index'),
       ]);
       if (r) setRoom(r);
       setSentences(s || []);

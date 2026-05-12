@@ -10,7 +10,7 @@ export default function StoryFinished({ roomCode, isTeacher, onHome }) {
       const { data: r } = await supabase.from('rooms').select('*').eq('code', roomCode).single();
       if (r) setRoom(r);
       const { data: s } = await supabase
-        .from('sentences').select('*').eq('room_code', roomCode).order('order_index');
+        .from('sentences').select('*').eq('room_code', roomCode).eq('skipped', false).order('order_index');
       setSentences(s || []);
     }
     load();

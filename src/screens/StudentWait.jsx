@@ -1,23 +1,35 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { supabase } from '../supabase';
 
 export default function StudentWait({ roomCode, myName, onStarted }) {
+  const onStartedRef = useRef(onStarted);
+  useEffect(() => { onStartedRef.current = onStarted; }, [onStarted]);
+
   useEffect(() => {
-    async function checkStatus() {
-      const { data: room } = await supabase.from('rooms').select('status').eq('code', roomCode).single();
-      if (room?.status === 'playing') { onStarted(); return; }
+    let active = true;
+
+    async function check() {
+      const { data } = await supabase
+        .from('rooms').select('status').eq('code', roomCode).single();
+      if (active && data?.status === 'playing') onStartedRef.current();
     }
-    checkStatus();
+
+    check();
+    const poll = setInterval(check, 2000);
 
     const channel = supabase.channel('student-wait-' + roomCode)
       .on('postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `code=eq.${roomCode}` },
-        ({ new: room }) => { if (room.status === 'playing') onStarted(); }
+        ({ new: r }) => { if (active && r.status === 'playing') onStartedRef.current(); }
       )
       .subscribe();
 
-    return () => supabase.removeChannel(channel);
-  }, [roomCode, onStarted]);
+    return () => {
+      active = false;
+      clearInterval(poll);
+      supabase.removeChannel(channel);
+    };
+  }, [roomCode]);
 
   return (
     <div className="screen screen-center">

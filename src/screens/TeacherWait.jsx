@@ -1,36 +1,51 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabase';
 
 export default function TeacherWait({ roomCode, onStarted, onBack }) {
   const [players, setPlayers] = useState([]);
   const [roomData, setRoomData] = useState(null);
   const [starting, setStarting] = useState(false);
+  const onStartedRef = useRef(onStarted);
+  useEffect(() => { onStartedRef.current = onStarted; }, [onStarted]);
 
   useEffect(() => {
-    async function init() {
+    let active = true;
+
+    async function fetchAll() {
       const { data: room } = await supabase.from('rooms').select('*').eq('code', roomCode).single();
+      if (!active) return;
       if (room) {
         setRoomData(room);
-        if (room.status === 'playing') { onStarted(); return; }
+        if (room.status === 'playing') { onStartedRef.current(); return; }
       }
       const { data: pList } = await supabase.from('players').select('*').eq('room_code', roomCode);
-      setPlayers(pList || []);
+      if (active) setPlayers(pList || []);
     }
-    init();
+
+    fetchAll();
+    const poll = setInterval(fetchAll, 2000);
 
     const channel = supabase.channel('teacher-wait-' + roomCode)
       .on('postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `code=eq.${roomCode}` },
-        ({ new: room }) => { setRoomData(room); if (room.status === 'playing') onStarted(); }
+        ({ new: room }) => {
+          if (!active) return;
+          setRoomData(room);
+          if (room.status === 'playing') onStartedRef.current();
+        }
       )
       .on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'players', filter: `room_code=eq.${roomCode}` },
-        ({ new: player }) => setPlayers(prev => [...prev, player])
+        ({ new: player }) => { if (active) setPlayers(prev => [...prev, player]); }
       )
       .subscribe();
 
-    return () => supabase.removeChannel(channel);
-  }, [roomCode, onStarted]);
+    return () => {
+      active = false;
+      clearInterval(poll);
+      supabase.removeChannel(channel);
+    };
+  }, [roomCode]);
 
   async function handleStart() {
     if (players.length < 2 || starting) return;
@@ -44,6 +59,7 @@ export default function TeacherWait({ roomCode, onStarted, onBack }) {
       status: 'playing',
       player_order: playerOrder,
       player_names: playerNames,
+      turn_started_at: new Date().toISOString(),
     }).eq('code', roomCode);
   }
 
@@ -92,11 +108,7 @@ export default function TeacherWait({ roomCode, onStarted, onBack }) {
         onClick={handleStart}
         disabled={players.length < 2 || starting}
       >
-        {players.length < 2
-          ? '학생이 2명 이상 필요해요'
-          : starting
-            ? '시작 중...'
-            : `${players.length}명으로 시작하기`}
+        {players.length < 2 ? '학생이 2명 이상 필요해요' : starting ? '시작 중...' : `${players.length}명으로 시작하기`}
       </button>
     </div>
   );

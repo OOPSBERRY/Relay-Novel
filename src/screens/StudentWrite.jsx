@@ -8,40 +8,75 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
   const [text, setText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [profanityError, setProfanityError] = useState(false);
-
+  const [timeLeft, setTimeLeft] = useState(null);
   const [spellResult, setSpellResult] = useState(null);
   const [spellChecking, setSpellChecking] = useState(false);
+
+  const onFinishedRef = useRef(onFinished);
+  useEffect(() => { onFinishedRef.current = onFinished; }, [onFinished]);
   const spellTimer = useRef(null);
+  const timerInterval = useRef(null);
 
   useEffect(() => {
-    async function init() {
+    let active = true;
+
+    async function fetchAll() {
       const { data: r } = await supabase.from('rooms').select('*').eq('code', roomCode).single();
-      if (r) { setRoom(r); if (r.status === 'finished') { onFinished(); return; } }
+      if (!active) return;
+      if (r) {
+        setRoom(r);
+        if (r.status === 'finished') { onFinishedRef.current(); return; }
+      }
       const { data: s } = await supabase.from('sentences').select('*').eq('room_code', roomCode).order('order_index');
-      setSentences(s || []);
+      if (active) setSentences(s || []);
     }
-    init();
+
+    fetchAll();
+    const poll = setInterval(fetchAll, 2000);
 
     const channel = supabase.channel('student-write-' + roomCode)
       .on('postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `code=eq.${roomCode}` },
-        ({ new: r }) => { setRoom(r); if (r.status === 'finished') onFinished(); }
+        ({ new: r }) => {
+          if (!active) return;
+          setRoom(r);
+          if (r.status === 'finished') onFinishedRef.current();
+        }
       )
       .on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'sentences', filter: `room_code=eq.${roomCode}` },
-        ({ new: s }) => setSentences(prev => [...prev, s].sort((a, b) => a.order_index - b.order_index))
+        ({ new: s }) => {
+          if (active) setSentences(prev => [...prev, s].sort((a, b) => a.order_index - b.order_index));
+        }
       )
       .subscribe();
 
-    return () => supabase.removeChannel(channel);
-  }, [roomCode, onFinished]);
+    return () => {
+      active = false;
+      clearInterval(poll);
+      supabase.removeChannel(channel);
+    };
+  }, [roomCode]);
+
+  // 타이머
+  useEffect(() => {
+    clearInterval(timerInterval.current);
+    if (!room?.turn_time_limit || !room?.turn_started_at) { setTimeLeft(null); return; }
+
+    function tick() {
+      const elapsed = (Date.now() - new Date(room.turn_started_at).getTime()) / 1000;
+      setTimeLeft(Math.max(0, Math.ceil(room.turn_time_limit - elapsed)));
+    }
+    tick();
+    timerInterval.current = setInterval(tick, 500);
+    return () => clearInterval(timerInterval.current);
+  }, [room?.turn_started_at, room?.turn_time_limit]);
 
   function handleTextChange(e) {
     const val = e.target.value;
     setText(val);
     setProfanityError(false);
     setSpellResult(null);
-
     clearTimeout(spellTimer.current);
     if (val.trim().length > 2) {
       setSpellChecking(true);
@@ -55,8 +90,7 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
     try {
       const res = await fetch(`/api/spellcheck?text=${encodeURIComponent(val)}`);
       const data = await res.json();
-      const result = data?.message?.result;
-      setSpellResult(result ?? null);
+      setSpellResult(data?.message?.result ?? null);
     } catch {
       setSpellResult(null);
     } finally {
@@ -66,13 +100,9 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
 
   async function handleSubmit() {
     if (!text.trim() || submitting || !room) return;
-
-    if (containsProfanity(text)) {
-      setProfanityError(true);
-      return;
-    }
-
+    if (containsProfanity(text)) { setProfanityError(true); return; }
     setSubmitting(true);
+
     const orderIndex = sentences.length;
     const isLast = orderIndex + 1 >= room.max_sentences;
 
@@ -82,10 +112,12 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
         text: text.trim(),
         player_name: myName,
         order_index: orderIndex,
+        skipped: false,
       });
-      if (isLast) {
-        await supabase.from('rooms').update({ status: 'finished' }).eq('code', roomCode);
-      }
+      await supabase.from('rooms').update({
+        turn_started_at: new Date().toISOString(),
+        ...(isLast ? { status: 'finished' } : {}),
+      }).eq('code', roomCode);
       setText('');
       setSpellResult(null);
     } finally {
@@ -100,12 +132,12 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
   const currentPlayerId = room.player_order[currentIdx];
   const isMyTurn = currentPlayerId === myId;
   const currentPlayerName = room.player_names[currentPlayerId] || '';
-  const recentSentences = sentences.slice(-3);
-  const progress = sentences.length;
+  const recentSentences = sentences.filter(s => !s.skipped).slice(-3);
+  const progress = sentences.filter(s => !s.skipped).length;
   const total = room.max_sentences;
-
+  const isTimeUp = timeLeft !== null && timeLeft <= 0;
+  const isWarning = timeLeft !== null && timeLeft <= 30 && timeLeft > 0;
   const spellErrors = spellResult?.result ?? [];
-  const hasSpellErrors = spellErrors.length > 0;
 
   return (
     <div className="screen write-screen">
@@ -137,61 +169,59 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
       </div>
 
       {isMyTurn ? (
-        <div className="my-turn-box">
-          <div className="my-turn-badge">✍️ 내 차례예요!</div>
+        <div className={`my-turn-box ${isWarning ? 'turn-warning' : ''} ${isTimeUp ? 'turn-expired' : ''}`}>
+          <div className="my-turn-top">
+            <div className="my-turn-badge">✍️ 내 차례예요!</div>
+            {timeLeft !== null && (
+              <div className={`turn-timer ${isWarning ? 'timer-warning' : ''} ${isTimeUp ? 'timer-expired' : ''}`}>
+                {isTimeUp ? '⏰ 시간 초과!' : `⏱ ${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')}`}
+              </div>
+            )}
+          </div>
 
-          <textarea
-            value={text}
-            onChange={handleTextChange}
-            placeholder="이야기를 이어가 볼까요?"
-            maxLength={200}
-            rows={3}
-            autoFocus
-          />
-          <div className="char-count">{text.length} / 200자</div>
+          {isTimeUp ? (
+            <div className="time-up-msg">선생님을 기다려주세요...</div>
+          ) : (
+            <>
+              <textarea value={text} onChange={handleTextChange} placeholder="이야기를 이어가 볼까요?" maxLength={200} rows={3} autoFocus />
+              <div className="char-count">{text.length} / 200자</div>
 
-          {/* 맞춤법 검사 결과 */}
-          {spellChecking && (
-            <div className="spell-checking">맞춤법 확인 중...</div>
-          )}
-          {!spellChecking && spellResult !== null && (
-            <div className={`spell-result ${hasSpellErrors ? 'spell-has-errors' : 'spell-ok'}`}>
-              {hasSpellErrors ? (
-                <>
-                  <p className="spell-title">📝 맞춤법 확인</p>
-                  {spellErrors.map((err, i) => (
-                    <div key={i} className="spell-error-row">
-                      <span className="spell-wrong">"{err.str_before}"</span>
-                      <span className="spell-arrow"> → </span>
-                      <span className="spell-correct">"{err.str_after}"</span>
-                    </div>
-                  ))}
-                </>
-              ) : (
-                <p>✅ 맞춤법 이상 없어요!</p>
+              {spellChecking && <div className="spell-checking">맞춤법 확인 중...</div>}
+              {!spellChecking && spellResult !== null && (
+                <div className={`spell-result ${spellErrors.length > 0 ? 'spell-has-errors' : 'spell-ok'}`}>
+                  {spellErrors.length > 0 ? (
+                    <>
+                      <p className="spell-title">📝 맞춤법 확인</p>
+                      {spellErrors.map((err, i) => (
+                        <div key={i} className="spell-error-row">
+                          <span className="spell-wrong">"{err.str_before}"</span>
+                          <span className="spell-arrow"> → </span>
+                          <span className="spell-correct">"{err.str_after}"</span>
+                        </div>
+                      ))}
+                    </>
+                  ) : <p>✅ 맞춤법 이상 없어요!</p>}
+                </div>
               )}
-            </div>
-          )}
 
-          {profanityError && (
-            <p className="error">부적절한 표현이 포함되어 있어요. 다시 작성해주세요.</p>
-          )}
+              {profanityError && <p className="error">부적절한 표현이 포함되어 있어요. 다시 작성해주세요.</p>}
 
-          <button
-            className="btn btn-primary btn-large"
-            onClick={handleSubmit}
-            disabled={!text.trim() || submitting}
-          >
-            {submitting ? '제출 중...' : '제출하기'}
-          </button>
+              <button className="btn btn-primary btn-large" onClick={handleSubmit} disabled={!text.trim() || submitting}>
+                {submitting ? '제출 중...' : '제출하기'}
+              </button>
+            </>
+          )}
         </div>
       ) : (
         <div className="waiting-turn-box">
           <div className="waiting-name-badge">{currentPlayerName}</div>
           <p>님이 쓰고 있어요...</p>
-          <div className="waiting-dots">
-            <span /><span /><span />
-          </div>
+          {timeLeft !== null && (
+            <div className={`turn-timer ${isWarning ? 'timer-warning' : ''} ${isTimeUp ? 'timer-expired' : ''}`}>
+              {isTimeUp ? '⏰ 시간 초과!' : `⏱ ${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')}`}
+            </div>
+          )}
+          <div className="waiting-dots"><span /><span /><span /></div>
         </div>
       )}
     </div>

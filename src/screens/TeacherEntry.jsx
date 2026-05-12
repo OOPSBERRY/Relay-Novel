@@ -18,6 +18,7 @@ export default function TeacherEntry({ onCreated, onRejoined, onBack }) {
   const [title, setTitle] = useState('');
   const [hint, setHint] = useState('');
   const [maxSentences, setMaxSentences] = useState(20);
+  const [turnTimeLimit, setTurnTimeLimit] = useState(0);
   const [password, setPassword] = useState('');
 
   const [classCode, setClassCode] = useState('');
@@ -73,6 +74,7 @@ export default function TeacherEntry({ onCreated, onRejoined, onBack }) {
         status: 'waiting',
         player_order: [],
         player_names: {},
+        turn_time_limit: turnTimeLimit > 0 ? turnTimeLimit : null,
         class_code: classCode.length === 4 ? classCode : null,
         class_id: classId,
       });
@@ -126,6 +128,15 @@ export default function TeacherEntry({ onCreated, onRejoined, onBack }) {
           <label>최대 문장 수</label>
           <select value={maxSentences} onChange={e => setMaxSentences(e.target.value)}>
             {[10, 15, 20, 25, 30].map(n => <option key={n} value={n}>{n}문장</option>)}
+          </select>
+
+          <label>1인당 제한 시간</label>
+          <select value={turnTimeLimit} onChange={e => setTurnTimeLimit(Number(e.target.value))}>
+            <option value={0}>제한 없음</option>
+            <option value={60}>1분</option>
+            <option value={120}>2분</option>
+            <option value={180}>3분</option>
+            <option value={300}>5분</option>
           </select>
 
           <label>교사 비밀번호 *</label>

@@ -648,6 +648,74 @@ textarea {
   50% { opacity: 1; transform: scale(1); }
 }
 
+/* ===== 타이머 ===== */
+.my-turn-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.turn-timer {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--purple);
+  background: var(--purple-light);
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  letter-spacing: 0.05em;
+}
+
+.timer-warning {
+  color: #D97706;
+  background: #FEF3C7;
+  animation: blink 0.8s ease-in-out infinite;
+}
+
+.timer-expired {
+  color: var(--red);
+  background: #FEF2F2;
+  animation: blink 0.5s ease-in-out infinite;
+}
+
+.turn-warning { border-color: #FCD34D; }
+.turn-expired { border-color: var(--red); background: #FFF5F5; }
+
+.time-up-msg {
+  text-align: center;
+  font-size: 1rem;
+  color: var(--red);
+  font-weight: 700;
+  padding: 16px;
+}
+
+.monitor-timer {
+  font-size: 0.9rem;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  color: var(--purple);
+  background: var(--purple-light);
+}
+
+.progress-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sentence-skipped {
+  opacity: 0.35;
+  font-style: italic;
+}
+
+.order-expired {
+  border-color: var(--red) !important;
+  background: #FEF2F2 !important;
+}
+
 /* ===== 맞춤법 검사 ===== */
 .spell-checking {
   font-size: 0.84rem;
