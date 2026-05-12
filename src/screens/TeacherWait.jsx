@@ -77,7 +77,7 @@ export default function TeacherWait({ roomCode, onStarted, onBack }) {
         </div>
 
         <button className="btn btn-projector" onClick={() => setProjector(true)}>
-          📺 빔프로젝터 모드
+          📺 QR코드 + 방코드 <span className="btn-sub">(학생들에게 보여주세요)</span>
         </button>
 
         {roomData && (
