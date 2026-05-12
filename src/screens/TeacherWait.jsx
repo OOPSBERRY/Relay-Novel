@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabase';
+import ProjectorMode from './ProjectorMode';
 
 export default function TeacherWait({ roomCode, onStarted, onBack }) {
   const [players, setPlayers] = useState([]);
   const [roomData, setRoomData] = useState(null);
   const [starting, setStarting] = useState(false);
+  const [projector, setProjector] = useState(false);
   const onStartedRef = useRef(onStarted);
   useEffect(() => { onStartedRef.current = onStarted; }, [onStarted]);
 
@@ -64,52 +66,67 @@ export default function TeacherWait({ roomCode, onStarted, onBack }) {
   }
 
   return (
-    <div className="screen">
-      <button className="back-btn" onClick={onBack}>← 처음으로</button>
+    <>
+      <div className="screen">
+        <button className="back-btn" onClick={onBack}>← 처음으로</button>
 
-      <div className="room-code-display">
-        <p className="room-code-label">방 코드</p>
-        <div className="room-code-big">{roomCode}</div>
-        <p className="room-code-hint">칠판에 적어주거나 학생들에게 알려주세요</p>
-      </div>
+        <div className="room-code-display">
+          <p className="room-code-label">방 코드</p>
+          <div className="room-code-big">{roomCode}</div>
+          <p className="room-code-hint">칠판에 적어주거나 학생들에게 알려주세요</p>
+        </div>
 
-      {roomData && (
+        <button className="btn btn-projector" onClick={() => setProjector(true)}>
+          📺 빔프로젝터 모드
+        </button>
+
+        {roomData && (
+          <div className="card">
+            <p>📚 <strong>{roomData.title}</strong></p>
+            {roomData.hint && <p className="muted">글감: {roomData.hint}</p>}
+            <p className="muted">최대 {roomData.max_sentences}문장</p>
+            {roomData.class_code && (
+              <div className="class-code-bar">
+                <span className="class-code-bar-label">반 서재 코드</span>
+                <span className="class-code-bar-value">{roomData.class_code}</span>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="card">
-          <p>📚 <strong>{roomData.title}</strong></p>
-          {roomData.hint && <p className="muted">글감: {roomData.hint}</p>}
-          <p className="muted">최대 {roomData.max_sentences}문장</p>
-          {roomData.class_code && (
-            <div className="class-code-bar">
-              <span className="class-code-bar-label">반 서재 코드</span>
-              <span className="class-code-bar-value">{roomData.class_code}</span>
-            </div>
+          <h3 className="card-title">참가한 학생 ({players.length}명)</h3>
+          {players.length === 0 ? (
+            <p className="muted">아직 아무도 들어오지 않았어요...</p>
+          ) : (
+            <ul className="player-list">
+              {players.map(p => (
+                <li key={p.id} className="player-item">
+                  <span className="player-dot" />
+                  {p.name}
+                </li>
+              ))}
+            </ul>
           )}
         </div>
-      )}
 
-      <div className="card">
-        <h3 className="card-title">참가한 학생 ({players.length}명)</h3>
-        {players.length === 0 ? (
-          <p className="muted">아직 아무도 들어오지 않았어요...</p>
-        ) : (
-          <ul className="player-list">
-            {players.map(p => (
-              <li key={p.id} className="player-item">
-                <span className="player-dot" />
-                {p.name}
-              </li>
-            ))}
-          </ul>
-        )}
+        <button
+          className="btn btn-primary btn-large"
+          onClick={handleStart}
+          disabled={players.length < 2 || starting}
+        >
+          {players.length < 2 ? '학생이 2명 이상 필요해요' : starting ? '시작 중...' : `${players.length}명으로 시작하기`}
+        </button>
       </div>
 
-      <button
-        className="btn btn-primary btn-large"
-        onClick={handleStart}
-        disabled={players.length < 2 || starting}
-      >
-        {players.length < 2 ? '학생이 2명 이상 필요해요' : starting ? '시작 중...' : `${players.length}명으로 시작하기`}
-      </button>
-    </div>
+      {projector && (
+        <ProjectorMode
+          roomCode={roomCode}
+          roomTitle={roomData?.title || ''}
+          players={players}
+          onClose={() => setProjector(false)}
+        />
+      )}
+    </>
   );
 }
