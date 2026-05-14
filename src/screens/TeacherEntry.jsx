@@ -122,12 +122,13 @@ export default function TeacherEntry({ onCreated, onRejoined, onBack }) {
           <label>소설 제목 *</label>
           <input value={title} onChange={e => setTitle(e.target.value)} placeholder="예: 우리 반의 대모험" maxLength={50} />
 
-          <label>글감 / 힌트 <span className="label-opt">(선택)</span></label>
-          <input value={hint} onChange={e => setHint(e.target.value)} placeholder="예: 어느 날 교실에 로봇이 나타났어요" maxLength={100} />
+          <label>첫 문장 <span className="label-opt">(선택)</span></label>
+          <input value={hint} onChange={e => setHint(e.target.value)} placeholder="예: 어느 날 교실에 로봇이 나타났어요." maxLength={100} />
+          <p className="input-hint">입력하면 이야기 첫 문장으로 고정됩니다</p>
 
-          <label>최대 문장 수</label>
+          <label>최대 턴 수</label>
           <select value={maxSentences} onChange={e => setMaxSentences(e.target.value)}>
-            {[10, 15, 20, 25, 30].map(n => <option key={n} value={n}>{n}문장</option>)}
+            {[10, 15, 20, 25, 30].map(n => <option key={n} value={n}>{n}턴</option>)}
           </select>
 
           <label>1인당 제한 시간</label>

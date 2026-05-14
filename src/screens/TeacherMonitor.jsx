@@ -90,13 +90,15 @@ export default function TeacherMonitor({ roomCode, onFinished, onBack }) {
 
   if (!room) return <div className="screen screen-center"><p className="muted">불러오는 중...</p></div>;
 
+  const hasFirstSentence = !!(room.hint && room.hint.trim());
+  const hintOffset = hasFirstSentence ? 1 : 0;
   const playerCount = room.player_order.length || 1;
-  const currentIdx = sentences.length % playerCount;
-  const currentId = room.player_order[currentIdx];
-  const currentName = room.player_names[currentId] || '';
   const realSentences = sentences.filter(s => !s.skipped);
-  const progress = realSentences.length;
-  const total = room.max_sentences;
+  const currentIdx = (realSentences.length - hintOffset) % playerCount;
+  const currentId = room.player_order[Math.max(0, currentIdx)];
+  const currentName = room.player_names[currentId] || '';
+  const progress = realSentences.length - hintOffset;
+  const total = room.max_sentences - hintOffset;
   const isTimeUp = timeLeft !== null && timeLeft <= 0;
   const isWarning = timeLeft !== null && timeLeft <= 30 && timeLeft > 0;
 

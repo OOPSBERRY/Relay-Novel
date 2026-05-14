@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { supabase } from '../supabase';
 
-export default function StudentWait({ roomCode, myName, onStarted }) {
+export default function StudentWait({ roomCode, myId, myName, onStarted }) {
   const onStartedRef = useRef(onStarted);
   useEffect(() => { onStartedRef.current = onStarted; }, [onStarted]);
 
@@ -11,7 +11,21 @@ export default function StudentWait({ roomCode, myName, onStarted }) {
     async function check() {
       const { data } = await supabase
         .from('rooms').select('status').eq('code', roomCode).single();
-      if (active && data?.status === 'playing') onStartedRef.current();
+      if (!active) return;
+      if (data?.status === 'playing') {
+        onStartedRef.current(roomCode);
+      } else if (data?.status === 'group_monitoring') {
+        await findAndJoinGroupRoom();
+      }
+    }
+
+    async function findAndJoinGroupRoom() {
+      const { data } = await supabase
+        .from('players').select('room_code').eq('id', myId).single();
+      if (!active) return;
+      if (data?.room_code && data.room_code !== roomCode) {
+        onStartedRef.current(data.room_code);
+      }
     }
 
     check();
@@ -20,7 +34,14 @@ export default function StudentWait({ roomCode, myName, onStarted }) {
     const channel = supabase.channel('student-wait-' + roomCode)
       .on('postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `code=eq.${roomCode}` },
-        ({ new: r }) => { if (active && r.status === 'playing') onStartedRef.current(); }
+        async ({ new: r }) => {
+          if (!active) return;
+          if (r.status === 'playing') {
+            onStartedRef.current(roomCode);
+          } else if (r.status === 'group_monitoring') {
+            await findAndJoinGroupRoom();
+          }
+        }
       )
       .subscribe();
 
@@ -29,7 +50,7 @@ export default function StudentWait({ roomCode, myName, onStarted }) {
       clearInterval(poll);
       supabase.removeChannel(channel);
     };
-  }, [roomCode]);
+  }, [roomCode, myId]);
 
   return (
     <div className="screen screen-center">

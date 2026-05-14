@@ -127,14 +127,17 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
 
   if (!room) return <div className="screen screen-center"><p className="muted">불러오는 중...</p></div>;
 
+  const hasFirstSentence = !!(room.hint && room.hint.trim());
+  const hintOffset = hasFirstSentence ? 1 : 0;
   const playerCount = room.player_order.length || 1;
-  const currentIdx = sentences.length % playerCount;
-  const currentPlayerId = room.player_order[currentIdx];
+  const allSentences = sentences.filter(s => !s.skipped);
+  const currentIdx = (allSentences.length - hintOffset) % playerCount;
+  const currentPlayerId = room.player_order[Math.max(0, currentIdx)];
   const isMyTurn = currentPlayerId === myId;
   const currentPlayerName = room.player_names[currentPlayerId] || '';
-  const recentSentences = sentences.filter(s => !s.skipped).slice(-3);
-  const progress = sentences.filter(s => !s.skipped).length;
-  const total = room.max_sentences;
+  const recentSentences = allSentences.slice(-3);
+  const progress = allSentences.length - hintOffset;
+  const total = room.max_sentences - hintOffset;
   const isTimeUp = timeLeft !== null && timeLeft <= 0;
   const isWarning = timeLeft !== null && timeLeft <= 30 && timeLeft > 0;
   const spellErrors = spellResult?.result ?? [];
@@ -150,10 +153,6 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
           <span className="progress-text">{progress} / {total}</span>
         </div>
       </div>
-
-      {room.hint && progress === 0 && (
-        <div className="hint-box">💡 글감: <em>{room.hint}</em></div>
-      )}
 
       <div className="recent-story">
         {recentSentences.length === 0 ? (

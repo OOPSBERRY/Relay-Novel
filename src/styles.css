@@ -171,6 +171,69 @@ body {
   color: rgba(255,255,255,0.25);
 }
 
+/* ===== 한 편 더 ===== */
+.btn-next-story {
+  background: var(--yellow);
+  color: var(--dark);
+  font-size: 1rem;
+  font-weight: 800;
+  padding: 12px 24px;
+  border-radius: var(--radius-pill);
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(255, 224, 51, 0.5);
+}
+.btn-next-story:hover { background: var(--yellow-hover); }
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease;
+  padding: 24px;
+}
+
+.modal-box {
+  background: var(--white);
+  border-radius: 24px;
+  padding: 32px 28px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.modal-title {
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: var(--purple-dark);
+  margin-bottom: 6px;
+}
+
+.next-story-banner {
+  margin-top: 16px;
+  background: var(--yellow-soft);
+  border: 2px solid var(--yellow);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.next-story-banner p {
+  font-weight: 700;
+  color: var(--dark);
+  font-size: 0.95rem;
+}
+
 .btn-readaloud {
   background: var(--purple-light);
   color: var(--purple-dark);
@@ -1628,4 +1691,245 @@ textarea {
     font-size: 9pt;
     color: #888;
   }
+}
+
+/* ===== 시작 모드 선택 탭 ===== */
+.start-mode-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.start-mode-tabs {
+  display: flex;
+  background: var(--gray-bg);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  gap: 4px;
+}
+
+.start-mode-tab {
+  flex: 1;
+  padding: 10px 0;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-family: var(--font);
+  cursor: pointer;
+  background: transparent;
+  color: var(--muted);
+  transition: all 0.15s;
+}
+.start-mode-tab.active {
+  background: var(--white);
+  color: var(--purple-dark);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.start-mode-tab:hover:not(.active) {
+  color: var(--text);
+}
+
+/* ===== 모둠 나누기 (대기 화면) ===== */
+.group-setup-card {
+  border: 2px solid var(--purple-light);
+  background: var(--purple-xlight);
+}
+
+.group-setup-desc {
+  font-size: 0.88rem;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+
+.group-count-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.group-count-label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.group-count-btns {
+  display: flex;
+  gap: 6px;
+}
+
+.group-count-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--gray-border);
+  background: var(--white);
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: var(--font);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.group-count-btn:hover:not(:disabled) {
+  border-color: var(--purple);
+  color: var(--purple);
+}
+.group-count-btn.active {
+  background: var(--purple);
+  border-color: var(--purple);
+  color: var(--white);
+}
+.group-count-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.group-preview {
+  font-size: 0.85rem;
+  color: var(--purple);
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+/* ===== 모둠 모니터 화면 ===== */
+.group-monitor-screen {
+  max-width: 960px;
+  width: 100%;
+  padding: 24px 20px 40px;
+}
+
+.group-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.group-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  border: 2px solid transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: border-color 0.2s;
+}
+
+.group-card-finished {
+  border-color: var(--green);
+  background: #F0FDF4;
+}
+
+.group-card-loading {
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+}
+
+.group-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.group-card-num {
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: var(--purple-dark);
+}
+
+.group-card-done-badge {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--green-dark);
+  background: #DCFCE7;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+}
+
+.group-card-players {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.group-player-chip {
+  font-size: 0.8rem;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--gray-bg);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.group-player-active {
+  background: var(--purple-light);
+  color: var(--purple-dark);
+}
+
+.group-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.group-progress-bar {
+  flex: 1;
+  height: 8px;
+  background: var(--gray-border);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.group-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--purple), #C084FC);
+  border-radius: var(--radius-pill);
+  transition: width 0.4s ease;
+}
+
+.group-progress-text {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.group-current-writer {
+  font-size: 0.85rem;
+  color: var(--purple);
+  font-weight: 600;
+}
+
+.group-story-btn {
+  align-self: flex-start;
+}
+
+/* ===== btn-outline ===== */
+.btn-outline {
+  background: var(--white);
+  color: var(--text);
+  border: 2px solid var(--gray-border);
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 14px 24px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  font-family: var(--font);
+  transition: all 0.15s;
+  width: 100%;
+}
+.btn-outline:hover:not(:disabled) {
+  border-color: var(--purple);
+  color: var(--purple);
+}
+.btn-outline:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }

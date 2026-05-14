@@ -4,6 +4,7 @@ import Home from './screens/Home';
 import TeacherEntry from './screens/TeacherEntry';
 import TeacherWait from './screens/TeacherWait';
 import TeacherMonitor from './screens/TeacherMonitor';
+import TeacherGroupMonitor from './screens/TeacherGroupMonitor';
 import StudentJoin from './screens/StudentJoin';
 import StudentWait from './screens/StudentWait';
 import StudentWrite from './screens/StudentWrite';
@@ -24,6 +25,7 @@ export default function App() {
   const [className, setClassName] = useState('');
   const [classId, setClassId] = useState('');
   const [readingCode, setReadingCode] = useState('');
+  const [groupRoomCodes, setGroupRoomCodes] = useState([]);
   const [recovering, setRecovering] = useState(true);
 
   // 새로고침 복구: 진행 중인 방이면 자동으로 글쓰기 화면으로
@@ -56,13 +58,27 @@ export default function App() {
     sessionStorage.removeItem(SESSION_KEY);
     setScreen('home');
     setRoomCode(''); setMyId(''); setMyName('');
-    setIsTeacher(false);
+    setIsTeacher(false); setGroupRoomCodes([]);
   }
 
   function handleStudentJoined(code, id, name) {
     sessionStorage.setItem(SESSION_KEY, JSON.stringify({ roomCode: code, myId: id, myName: name }));
     setRoomCode(code); setMyId(id); setMyName(name);
     setScreen('student-wait');
+  }
+
+  function handleStudentStarted(newRoomCode) {
+    if (newRoomCode && newRoomCode !== roomCode) {
+      setRoomCode(newRoomCode);
+      const saved = sessionStorage.getItem(SESSION_KEY);
+      if (saved) {
+        try {
+          const session = JSON.parse(saved);
+          sessionStorage.setItem(SESSION_KEY, JSON.stringify({ ...session, roomCode: newRoomCode }));
+        } catch { /* ignore */ }
+      }
+    }
+    setScreen('student-write');
   }
 
   function handleStudentFinished() {
@@ -99,16 +115,29 @@ export default function App() {
       />
     ),
     'teacher-wait': (
-      <TeacherWait roomCode={roomCode} onStarted={() => setScreen('teacher-monitor')} onBack={reset} />
+      <TeacherWait
+        roomCode={roomCode}
+        onStarted={() => setScreen('teacher-monitor')}
+        onGroupStarted={(codes) => { setGroupRoomCodes(codes); setScreen('teacher-group-monitor'); }}
+        onBack={reset}
+      />
     ),
     'teacher-monitor': (
       <TeacherMonitor roomCode={roomCode} onFinished={() => setScreen('story-finished')} onBack={reset} />
+    ),
+    'teacher-group-monitor': (
+      <TeacherGroupMonitor
+        parentRoomCode={roomCode}
+        groupRoomCodes={groupRoomCodes}
+        onViewStory={(code) => { setRoomCode(code); setScreen('story-finished'); }}
+        onBack={reset}
+      />
     ),
     'student-join': (
       <StudentJoin onJoined={handleStudentJoined} onBack={() => setScreen('home')} />
     ),
     'student-wait': (
-      <StudentWait roomCode={roomCode} myId={myId} myName={myName} onStarted={() => setScreen('student-write')} />
+      <StudentWait roomCode={roomCode} myId={myId} myName={myName} onStarted={handleStudentStarted} />
     ),
     'student-write': (
       <StudentWrite roomCode={roomCode} myId={myId} myName={myName} onFinished={handleStudentFinished} />
