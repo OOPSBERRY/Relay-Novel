@@ -14,7 +14,6 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
 
   const onFinishedRef = useRef(onFinished);
   useEffect(() => { onFinishedRef.current = onFinished; }, [onFinished]);
-  const spellTimer = useRef(null);
   const timerInterval = useRef(null);
 
   useEffect(() => {
@@ -73,29 +72,38 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
   }, [room?.turn_started_at, room?.turn_time_limit]);
 
   function handleTextChange(e) {
-    const val = e.target.value;
-    setText(val);
+    setText(e.target.value);
     setProfanityError(false);
     setSpellResult(null);
-    clearTimeout(spellTimer.current);
-    if (val.trim().length > 2) {
-      setSpellChecking(true);
-      spellTimer.current = setTimeout(() => checkSpelling(val), 1500);
-    } else {
+  }
+
+  async function handleSpellCheck() {
+    if (!text.trim() || spellChecking) return;
+    setSpellChecking(true);
+    setSpellResult(null);
+    try {
+      const res = await fetch(`/api/spellcheck?text=${encodeURIComponent(text)}`);
+      const data = await res.json();
+      setSpellResult(data?.message?.result ?? null);
+    } catch {
+      setSpellResult({ error: true });
+    } finally {
       setSpellChecking(false);
     }
   }
 
-  async function checkSpelling(val) {
-    try {
-      const res = await fetch(`/api/spellcheck?text=${encodeURIComponent(val)}`);
-      const data = await res.json();
-      setSpellResult(data?.message?.result ?? null);
-    } catch {
-      setSpellResult(null);
-    } finally {
-      setSpellChecking(false);
+  function handleFixOne(err) {
+    setText(prev => prev.replace(err.str_before, err.str_after));
+    setSpellResult(prev => prev ? { ...prev, result: (prev.result || []).filter(e => e !== err) } : null);
+  }
+
+  function handleFixAll() {
+    let fixed = text;
+    for (const err of spellErrors) {
+      fixed = fixed.replace(err.str_before, err.str_after);
     }
+    setText(fixed);
+    setSpellResult(null);
   }
 
   async function handleSubmit() {
@@ -183,23 +191,44 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
           ) : (
             <>
               <textarea value={text} onChange={handleTextChange} placeholder="이야기를 이어가 볼까요?" maxLength={200} rows={3} autoFocus />
-              <div className="char-count">{text.length} / 200자</div>
+              <div className="spell-action-row">
+                <span className="char-count">{text.length} / 200자</span>
+                <button
+                  className="btn-spell-check"
+                  onClick={handleSpellCheck}
+                  disabled={!text.trim() || spellChecking}
+                >
+                  {spellChecking ? '검사 중...' : '맞춤법 검사'}
+                </button>
+              </div>
 
-              {spellChecking && <div className="spell-checking">맞춤법 확인 중...</div>}
-              {!spellChecking && spellResult !== null && (
-                <div className={`spell-result ${spellErrors.length > 0 ? 'spell-has-errors' : 'spell-ok'}`}>
-                  {spellErrors.length > 0 ? (
+              {spellResult !== null && (
+                <div className={`spell-panel ${spellErrors.length > 0 ? 'spell-has-errors' : 'spell-ok'}`}>
+                  {spellResult.error ? (
+                    <p className="spell-panel-msg">맞춤법 검사 중 오류가 발생했어요.</p>
+                  ) : spellErrors.length === 0 ? (
+                    <p className="spell-panel-msg">✅ 맞춤법 이상 없어요!</p>
+                  ) : (
                     <>
-                      <p className="spell-title">📝 맞춤법 확인</p>
+                      <div className="spell-panel-header">
+                        <span>총 <strong>{spellErrors.length}개</strong> 수정 제안</span>
+                        <button className="btn-spell-fix-all" onClick={handleFixAll}>모두 수정</button>
+                      </div>
                       {spellErrors.map((err, i) => (
-                        <div key={i} className="spell-error-row">
-                          <span className="spell-wrong">"{err.str_before}"</span>
-                          <span className="spell-arrow"> → </span>
-                          <span className="spell-correct">"{err.str_after}"</span>
+                        <div key={i} className="spell-error-item">
+                          <div className="spell-error-words">
+                            <span className="spell-wrong">{err.str_before}</span>
+                            <span className="spell-arrow">→</span>
+                            <span className="spell-correct">{err.str_after}</span>
+                            <span className="spell-type-badge">
+                              {err.error_idx === 1 ? '맞춤법' : err.error_idx === 2 ? '띄어쓰기' : '교정'}
+                            </span>
+                          </div>
+                          <button className="btn-spell-fix" onClick={() => handleFixOne(err)}>수정</button>
                         </div>
                       ))}
                     </>
-                  ) : <p>✅ 맞춤법 이상 없어요!</p>}
+                  )}
                 </div>
               )}
 
