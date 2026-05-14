@@ -626,13 +626,13 @@ body {
 .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
 
 .home-btn-icon { font-size: 1.6rem; display: block; margin-bottom: 2px; }
-.home-btn-main { display: block; font-size: 1.25rem; font-weight: 800; }
-.home-btn-sub { display: block; font-size: 0.8rem; opacity: 0.75; font-weight: 500; margin-top: 2px; }
+.home-btn-main { display: block; font-size: 1.3rem; font-family: 'Sunflower', var(--font); font-weight: 500; letter-spacing: 0.04em; }
+.home-btn-sub { display: block; font-size: 0.8rem; opacity: 0.72; font-weight: 500; margin-top: 2px; font-family: var(--font); }
 
 .btn-teacher {
   background: var(--purple);
   color: var(--white);
-  font-family: var(--font);
+  font-family: 'Sunflower', var(--font);
   padding: 16px 18px;
   box-shadow: 0 4px 16px rgba(139, 79, 232, 0.35);
 }
@@ -641,7 +641,7 @@ body {
 .btn-student {
   background: var(--yellow);
   color: var(--dark);
-  font-family: var(--font);
+  font-family: 'Sunflower', var(--font);
   padding: 16px 18px;
   box-shadow: 0 4px 16px rgba(255, 224, 51, 0.5);
 }

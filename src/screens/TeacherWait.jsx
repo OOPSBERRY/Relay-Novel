@@ -20,7 +20,6 @@ export default function TeacherWait({ roomCode, onStarted, onGroupStarted, onBac
   const [projector, setProjector] = useState(false);
   const [groupCount, setGroupCount] = useState(4);
   const [startMode, setStartMode] = useState('single');
-  const [copied, setCopied] = useState(false);
   const onStartedRef = useRef(onStarted);
   const onGroupStartedRef = useRef(onGroupStarted);
   useEffect(() => { onStartedRef.current = onStarted; }, [onStarted]);
@@ -165,13 +164,6 @@ export default function TeacherWait({ roomCode, onStarted, onGroupStarted, onBac
     }
   }
 
-  function handleCopy() {
-    navigator.clipboard.writeText(roomCode).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  }
-
   const maxGroups = Math.min(6, Math.floor(players.length / 2));
   const effectiveGroupCount = Math.min(groupCount, maxGroups);
   const playersPerGroup = players.length > 0 ? Math.ceil(players.length / effectiveGroupCount) : 0;
@@ -183,12 +175,7 @@ export default function TeacherWait({ roomCode, onStarted, onGroupStarted, onBac
 
         <div className="room-code-display">
           <p className="room-code-label">학생들에게 이 코드를 알려주세요</p>
-          <div className="room-code-row">
-            <div className="room-code-big">{roomCode}</div>
-            <button className="copy-btn" onClick={handleCopy}>
-              {copied ? '✓ 복사됨' : '복사'}
-            </button>
-          </div>
+          <div className="room-code-big">{roomCode}</div>
           <p className="room-code-hint">학생: 앱 열기 → 학생 → 코드 입력</p>
         </div>
 
