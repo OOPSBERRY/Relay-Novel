@@ -14,6 +14,7 @@ import ClassLibrary from './screens/ClassLibrary';
 import StoryReader from './screens/StoryReader';
 
 const SESSION_KEY = 'relay_student_session';
+const TEACHER_KEY = 'relay_teacher_session';
 
 export default function App() {
   const [screen, setScreen] = useState('home');
@@ -28,27 +29,48 @@ export default function App() {
   const [groupRoomCodes, setGroupRoomCodes] = useState([]);
   const [recovering, setRecovering] = useState(true);
 
-  // 새로고침 복구: 진행 중인 방이면 자동으로 글쓰기 화면으로
+  // 새로고침 복구
   useEffect(() => {
     async function tryRecover() {
-      const saved = sessionStorage.getItem(SESSION_KEY);
-      if (!saved) { setRecovering(false); return; }
-
+      // 교사 복구
       try {
-        const { roomCode: rc, myId: id, myName: name } = JSON.parse(saved);
-        const { data } = await supabase.from('rooms').select('status').eq('code', rc).single();
+        const teacherSaved = localStorage.getItem(TEACHER_KEY);
+        if (teacherSaved) {
+          const { roomCode: rc, password } = JSON.parse(teacherSaved);
+          const { data: room } = await supabase.from('rooms').select('*').eq('code', rc).single();
+          if (room && room.teacher_password === password && room.status !== 'finished') {
+            setRoomCode(rc);
+            setIsTeacher(true);
+            if (room.status === 'waiting') setScreen('teacher-wait');
+            else if (room.status === 'playing') setScreen('teacher-monitor');
+            else if (room.status === 'group_monitoring') {
+              setGroupRoomCodes(room.group_room_codes || []);
+              setScreen('teacher-group-monitor');
+            }
+            setRecovering(false);
+            return;
+          } else {
+            localStorage.removeItem(TEACHER_KEY);
+          }
+        }
+      } catch { localStorage.removeItem(TEACHER_KEY); }
 
-        if (data?.status === 'playing') {
-          setRoomCode(rc);
-          setMyId(id);
-          setMyName(name);
-          setScreen('student-write');
-        } else {
+      // 학생 복구
+      try {
+        const saved = sessionStorage.getItem(SESSION_KEY);
+        if (saved) {
+          const { roomCode: rc, myId: id, myName: name } = JSON.parse(saved);
+          const { data } = await supabase.from('rooms').select('status').eq('code', rc).single();
+          if (data?.status === 'playing') {
+            setRoomCode(rc); setMyId(id); setMyName(name);
+            setScreen('student-write');
+            setRecovering(false);
+            return;
+          }
           sessionStorage.removeItem(SESSION_KEY);
         }
-      } catch {
-        sessionStorage.removeItem(SESSION_KEY);
-      }
+      } catch { sessionStorage.removeItem(SESSION_KEY); }
+
       setRecovering(false);
     }
     tryRecover();
@@ -56,9 +78,14 @@ export default function App() {
 
   function reset() {
     sessionStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(TEACHER_KEY);
     setScreen('home');
     setRoomCode(''); setMyId(''); setMyName('');
     setIsTeacher(false); setGroupRoomCodes([]);
+  }
+
+  function saveTeacherSession(code, password) {
+    localStorage.setItem(TEACHER_KEY, JSON.stringify({ roomCode: code, password }));
   }
 
   function handleStudentJoined(code, id, name) {
@@ -106,10 +133,9 @@ export default function App() {
     ),
     'teacher-entry': (
       <TeacherEntry
-        onCreated={(code) => { setRoomCode(code); setIsTeacher(true); setScreen('teacher-wait'); }}
-        onRejoined={(code, status) => {
-          setRoomCode(code); setIsTeacher(true);
-          setScreen(status === 'waiting' ? 'teacher-wait' : status === 'finished' ? 'story-finished' : 'teacher-monitor');
+        onCreated={(code, password) => {
+          saveTeacherSession(code, password);
+          setRoomCode(code); setIsTeacher(true); setScreen('teacher-wait');
         }}
         onBack={() => setScreen('home')}
       />
