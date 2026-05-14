@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabase';
+import ReadAloudMode from './ReadAloudMode';
 
-function GroupCard({ groupIndex, roomCode, onViewStory }) {
+function GroupCard({ groupIndex, roomCode, onReadAloud, onViewStory }) {
   const [room, setRoom] = useState(null);
   const [sentenceCount, setSentenceCount] = useState(0);
 
@@ -86,9 +87,14 @@ function GroupCard({ groupIndex, roomCode, onViewStory }) {
       </div>
 
       {isFinished ? (
-        <button className="btn btn-primary btn-sm group-story-btn" onClick={() => onViewStory(roomCode)}>
-          이야기 보기
-        </button>
+        <div className="group-card-actions">
+          <button className="btn btn-readaloud btn-sm" onClick={() => onReadAloud(roomCode, room.title)}>
+            📖 낭독 모드
+          </button>
+          <button className="btn btn-print btn-sm" onClick={() => onViewStory(roomCode)}>
+            🖨️ 인쇄 / 저장
+          </button>
+        </div>
       ) : (
         <p className="group-current-writer">
           {currentName ? `✍️ ${currentName} 쓰는 중` : '대기 중'}
@@ -100,6 +106,13 @@ function GroupCard({ groupIndex, roomCode, onViewStory }) {
 
 export default function TeacherGroupMonitor({ parentRoomCode, groupRoomCodes, onViewStory, onBack }) {
   const [endingAll, setEndingAll] = useState(false);
+  const [readAloud, setReadAloud] = useState(null); // { title, sentences }
+
+  async function handleReadAloud(roomCode, title) {
+    const { data: s } = await supabase
+      .from('sentences').select('*').eq('room_code', roomCode).eq('skipped', false).order('order_index');
+    setReadAloud({ title, sentences: s || [] });
+  }
 
   async function handleEndAll() {
     if (!window.confirm('모든 모둠의 소설을 지금 끝낼까요?')) return;
@@ -111,30 +124,41 @@ export default function TeacherGroupMonitor({ parentRoomCode, groupRoomCodes, on
   }
 
   return (
-    <div className="screen group-monitor-screen">
-      <div className="monitor-header">
-        <div>
-          <h2 className="monitor-title">모둠 릴레이 소설</h2>
-          <p className="muted">{groupRoomCodes.length}개 모둠 동시 진행 중</p>
-        </div>
-        <div className="monitor-actions">
-          <button className="btn btn-danger btn-sm" onClick={handleEndAll} disabled={endingAll}>
-            모두 끝내기
-          </button>
-          <button className="btn btn-ghost btn-sm" onClick={onBack}>처음으로</button>
-        </div>
-      </div>
+    <>
+      {readAloud && (
+        <ReadAloudMode
+          sentences={readAloud.sentences}
+          title={readAloud.title}
+          onClose={() => setReadAloud(null)}
+        />
+      )}
 
-      <div className="group-grid">
-        {groupRoomCodes.map((code, i) => (
-          <GroupCard
-            key={code}
-            groupIndex={i + 1}
-            roomCode={code}
-            onViewStory={onViewStory}
-          />
-        ))}
+      <div className="screen group-monitor-screen">
+        <div className="monitor-header">
+          <div>
+            <h2 className="monitor-title">모둠 릴레이 소설</h2>
+            <p className="muted">{groupRoomCodes.length}개 모둠 동시 진행 중</p>
+          </div>
+          <div className="monitor-actions">
+            <button className="btn btn-danger btn-sm" onClick={handleEndAll} disabled={endingAll}>
+              모두 끝내기
+            </button>
+            <button className="btn btn-ghost btn-sm" onClick={onBack}>처음으로</button>
+          </div>
+        </div>
+
+        <div className="group-grid">
+          {groupRoomCodes.map((code, i) => (
+            <GroupCard
+              key={code}
+              groupIndex={i + 1}
+              roomCode={code}
+              onReadAloud={handleReadAloud}
+              onViewStory={onViewStory}
+            />
+          ))}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

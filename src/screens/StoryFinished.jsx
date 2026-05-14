@@ -3,7 +3,7 @@ import confetti from 'canvas-confetti';
 import { supabase } from '../supabase';
 import ReadAloudMode from './ReadAloudMode';
 
-export default function StoryFinished({ roomCode, isTeacher, onHome }) {
+export default function StoryFinished({ roomCode, isTeacher, onHome, backLabel = '처음으로' }) {
   const [room, setRoom] = useState(null);
   const [sentences, setSentences] = useState([]);
   const [readAloud, setReadAloud] = useState(false);
@@ -52,7 +52,7 @@ export default function StoryFinished({ roomCode, isTeacher, onHome }) {
               🖨️ PDF로 저장 / 인쇄
             </button>
             <button className="btn btn-ghost" onClick={onHome}>
-              처음으로
+              {backLabel}
             </button>
           </div>
         </div>

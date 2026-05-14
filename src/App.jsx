@@ -143,7 +143,12 @@ export default function App() {
       <StudentWrite roomCode={roomCode} myId={myId} myName={myName} onFinished={handleStudentFinished} />
     ),
     'story-finished': (
-      <StoryFinished roomCode={roomCode} isTeacher={isTeacher} onHome={reset} />
+      <StoryFinished
+        roomCode={roomCode}
+        isTeacher={isTeacher}
+        onHome={groupRoomCodes.length > 0 ? () => setScreen('teacher-group-monitor') : reset}
+        backLabel={groupRoomCodes.length > 0 ? '모둠으로 돌아가기' : '처음으로'}
+      />
     ),
     'class-setup': (
       <ClassSetup
