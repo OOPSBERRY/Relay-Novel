@@ -11,13 +11,19 @@ export default function Home({ onTeacher, onStudent, onLibrary }) {
 
       <div className="home-bottom">
         <button className="btn btn-teacher" onClick={onTeacher}>
-          👩‍🏫 선생님
+          <span className="home-btn-icon">👩‍🏫</span>
+          <span className="home-btn-main">선생님</span>
+          <span className="home-btn-sub">방 만들고 시작하기</span>
         </button>
         <button className="btn btn-student" onClick={onStudent}>
-          🙋 학생
+          <span className="home-btn-icon">🙋</span>
+          <span className="home-btn-main">학생</span>
+          <span className="home-btn-sub">방 코드로 참가하기</span>
         </button>
         <button className="btn btn-library" onClick={onLibrary}>
-          📚 반 서재 보기
+          <span className="home-btn-icon">📚</span>
+          <span className="home-btn-main">반 서재 보기</span>
+          <span className="home-btn-sub">완성된 이야기 모아보기</span>
         </button>
       </div>
     </div>

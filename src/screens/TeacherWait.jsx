@@ -20,6 +20,7 @@ export default function TeacherWait({ roomCode, onStarted, onGroupStarted, onBac
   const [projector, setProjector] = useState(false);
   const [groupCount, setGroupCount] = useState(4);
   const [startMode, setStartMode] = useState('single');
+  const [copied, setCopied] = useState(false);
   const onStartedRef = useRef(onStarted);
   const onGroupStartedRef = useRef(onGroupStarted);
   useEffect(() => { onStartedRef.current = onStarted; }, [onStarted]);
@@ -164,6 +165,13 @@ export default function TeacherWait({ roomCode, onStarted, onGroupStarted, onBac
     }
   }
 
+  function handleCopy() {
+    navigator.clipboard.writeText(roomCode).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
   const maxGroups = Math.min(6, Math.floor(players.length / 2));
   const effectiveGroupCount = Math.min(groupCount, maxGroups);
   const playersPerGroup = players.length > 0 ? Math.ceil(players.length / effectiveGroupCount) : 0;
@@ -174,9 +182,14 @@ export default function TeacherWait({ roomCode, onStarted, onGroupStarted, onBac
         <button className="back-btn" onClick={onBack}>← 처음으로</button>
 
         <div className="room-code-display">
-          <p className="room-code-label">방 코드</p>
-          <div className="room-code-big">{roomCode}</div>
-          <p className="room-code-hint">칠판에 적어주거나 학생들에게 알려주세요</p>
+          <p className="room-code-label">학생들에게 이 코드를 알려주세요</p>
+          <div className="room-code-row">
+            <div className="room-code-big">{roomCode}</div>
+            <button className="copy-btn" onClick={handleCopy}>
+              {copied ? '✓ 복사됨' : '복사'}
+            </button>
+          </div>
+          <p className="room-code-hint">학생: 앱 열기 → 학생 → 코드 입력</p>
         </div>
 
         <button className="btn btn-projector" onClick={() => setProjector(true)}>
@@ -228,6 +241,11 @@ export default function TeacherWait({ roomCode, onStarted, onGroupStarted, onBac
               모둠별
             </button>
           </div>
+          <p className="start-mode-desc">
+            {startMode === 'single'
+              ? '모든 학생이 한 팀으로 이야기 한 편을 완성합니다.'
+              : '학생들을 모둠으로 나눠 동시에 각자의 이야기를 씁니다.'}
+          </p>
 
           {startMode === 'single' ? (
             <button

@@ -20,6 +20,7 @@ export default function TeacherEntry({ onCreated, onRejoined, onBack }) {
   const [maxSentences, setMaxSentences] = useState(20);
   const [turnTimeLimit, setTurnTimeLimit] = useState(0);
   const [password, setPassword] = useState('');
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const [classCode, setClassCode] = useState('');
   const [classPassword, setClassPassword] = useState('');
@@ -41,7 +42,6 @@ export default function TeacherEntry({ onCreated, onRejoined, onBack }) {
     if (classCode.length === 4) {
       if (classPassword.length < 4) { setError('반 서재 비밀번호를 4자리 이상 입력해주세요.'); return; }
 
-      // 같은 코드 + 같은 비밀번호 조합 찾기
       const { data: existing } = await supabase
         .from('classes').select('id')
         .eq('class_code', classCode)
@@ -51,7 +51,6 @@ export default function TeacherEntry({ onCreated, onRejoined, onBack }) {
       if (existing) {
         classId = existing.id;
       } else {
-        // 새 서재 생성 (이름 필요)
         if (!className.trim()) { setError('처음 만드는 반 서재라면 반 이름을 입력해주세요.'); return; }
         const { data: newClass, error: classErr } = await supabase
           .from('classes')
@@ -120,53 +119,64 @@ export default function TeacherEntry({ onCreated, onRejoined, onBack }) {
       {tab === 'create' ? (
         <div className="form">
           <label>소설 제목 *</label>
-          <input value={title} onChange={e => setTitle(e.target.value)} placeholder="예: 우리 반의 대모험" maxLength={50} />
-
-          <label>첫 문장 <span className="label-opt">(선택)</span></label>
-          <input value={hint} onChange={e => setHint(e.target.value)} placeholder="예: 어느 날 교실에 로봇이 나타났어요." maxLength={100} />
-          <p className="input-hint">입력하면 이야기 첫 문장으로 고정됩니다</p>
-
-          <label>최대 턴 수</label>
-          <select value={maxSentences} onChange={e => setMaxSentences(e.target.value)}>
-            {[10, 15, 20, 25, 30].map(n => <option key={n} value={n}>{n}턴</option>)}
-          </select>
-
-          <label>1인당 제한 시간</label>
-          <select value={turnTimeLimit} onChange={e => setTurnTimeLimit(Number(e.target.value))}>
-            <option value={0}>제한 없음</option>
-            <option value={60}>1분</option>
-            <option value={120}>2분</option>
-            <option value={180}>3분</option>
-            <option value={300}>5분</option>
-          </select>
+          <input value={title} onChange={e => setTitle(e.target.value)} placeholder="예: 우리 반의 대모험" maxLength={50} autoFocus />
 
           <label>교사 비밀번호 *</label>
-          <input type="password" value={password} onChange={e => setPassword(e.target.value.slice(0, 20))} placeholder="예: abc123" />
-          <p className="input-hint">숫자+글자 조합 가능 · 4자리 이상 · 방 재접속 시 필요</p>
+          <input type="password" value={password} onChange={e => setPassword(e.target.value.slice(0, 20))} placeholder="4자리 이상 (재접속 시 필요)" />
 
-          <div className="class-link-section">
-            <p className="class-link-label">📚 반 서재 연결 <span className="label-opt">(선택)</span></p>
-            <p className="input-hint">완성된 이야기를 반 서재에 자동으로 저장합니다</p>
+          <button
+            type="button"
+            className="advanced-toggle"
+            onClick={() => setShowAdvanced(v => !v)}
+          >
+            {showAdvanced ? '▲ 상세 설정 접기' : '▼ 상세 설정 (첫 문장·턴 수·시간제한·반 서재)'}
+          </button>
 
-            <label>반 코드 (4자리 숫자)</label>
-            <input
-              value={classCode}
-              onChange={e => setClassCode(e.target.value.replace(/\D/g, '').slice(0, 4))}
-              placeholder="없으면 비워두세요"
-              inputMode="numeric"
-            />
+          {showAdvanced && (
+            <div className="advanced-section">
+              <label>첫 문장 <span className="label-opt">(선택)</span></label>
+              <input value={hint} onChange={e => setHint(e.target.value)} placeholder="예: 어느 날 교실에 로봇이 나타났어요." maxLength={100} />
+              <p className="input-hint">입력하면 이야기 첫 문장으로 고정됩니다</p>
 
-            {classCode.length === 4 && (
-              <>
-                <label>반 서재 비밀번호 *</label>
-                <input type="password" value={classPassword} onChange={e => setClassPassword(e.target.value.slice(0, 20))} placeholder="예: abc123" />
+              <label>최대 턴 수</label>
+              <select value={maxSentences} onChange={e => setMaxSentences(e.target.value)}>
+                {[10, 15, 20, 25, 30].map(n => <option key={n} value={n}>{n}턴</option>)}
+              </select>
 
-                <label>반 이름 <span className="label-opt">(처음 만들 때만)</span></label>
-                <input value={className} onChange={e => setClassName(e.target.value)} placeholder="예: 3학년 2반 (기존 서재면 비워도 됩니다)" maxLength={20} />
-                <p className="input-hint">같은 코드+비밀번호 조합이 이미 있으면 기존 서재에 연결됩니다</p>
-              </>
-            )}
-          </div>
+              <label>1인당 제한 시간</label>
+              <select value={turnTimeLimit} onChange={e => setTurnTimeLimit(Number(e.target.value))}>
+                <option value={0}>제한 없음</option>
+                <option value={60}>1분</option>
+                <option value={120}>2분</option>
+                <option value={180}>3분</option>
+                <option value={300}>5분</option>
+              </select>
+
+              <div className="class-link-section">
+                <p className="class-link-label">📚 반 서재 연결 <span className="label-opt">(선택)</span></p>
+                <p className="input-hint">완성된 이야기를 반 서재에 자동으로 저장합니다</p>
+
+                <label>반 코드 (4자리 숫자)</label>
+                <input
+                  value={classCode}
+                  onChange={e => setClassCode(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  placeholder="없으면 비워두세요"
+                  inputMode="numeric"
+                />
+
+                {classCode.length === 4 && (
+                  <>
+                    <label>반 서재 비밀번호 *</label>
+                    <input type="password" value={classPassword} onChange={e => setClassPassword(e.target.value.slice(0, 20))} placeholder="예: abc123" />
+
+                    <label>반 이름 <span className="label-opt">(처음 만들 때만)</span></label>
+                    <input value={className} onChange={e => setClassName(e.target.value)} placeholder="예: 3학년 2반 (기존 서재면 비워도 됩니다)" maxLength={20} />
+                    <p className="input-hint">같은 코드+비밀번호 조합이 이미 있으면 기존 서재에 연결됩니다</p>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
 
           {error && <p className="error">{error}</p>}
 

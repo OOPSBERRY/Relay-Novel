@@ -221,6 +221,16 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
             </div>
           )}
           <div className="waiting-dots"><span /><span /><span /></div>
+          {(() => {
+            const myIdx = room.player_order.indexOf(myId);
+            const gap = (myIdx - currentIdx + playerCount) % playerCount;
+            if (gap === 0) return null;
+            return (
+              <p className="waiting-turn-hint">
+                내 차례까지 <strong>{gap}명</strong> 남았어요
+              </p>
+            );
+          })()}
         </div>
       )}
     </div>

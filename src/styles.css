@@ -625,14 +625,15 @@ body {
 .btn:active { transform: scale(0.96); }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
 
+.home-btn-icon { font-size: 1.6rem; display: block; margin-bottom: 2px; }
+.home-btn-main { display: block; font-size: 1.25rem; font-weight: 800; }
+.home-btn-sub { display: block; font-size: 0.8rem; opacity: 0.75; font-weight: 500; margin-top: 2px; }
+
 .btn-teacher {
   background: var(--purple);
   color: var(--white);
-  font-family: 'Sunflower', var(--font);
-  font-size: 1.49rem;
-  font-weight: 500;
-  letter-spacing: 0.05em;
-  padding: 18px;
+  font-family: var(--font);
+  padding: 16px 18px;
   box-shadow: 0 4px 16px rgba(139, 79, 232, 0.35);
 }
 .btn-teacher:hover:not(:disabled) { background: var(--purple-dark); box-shadow: 0 6px 20px rgba(139, 79, 232, 0.4); }
@@ -640,11 +641,8 @@ body {
 .btn-student {
   background: var(--yellow);
   color: var(--dark);
-  font-family: 'Sunflower', var(--font);
-  font-size: 1.49rem;
-  font-weight: 500;
-  letter-spacing: 0.05em;
-  padding: 18px;
+  font-family: var(--font);
+  padding: 16px 18px;
   box-shadow: 0 4px 16px rgba(255, 224, 51, 0.5);
 }
 .btn-student:hover:not(:disabled) { background: var(--yellow-hover); }
@@ -791,11 +789,19 @@ input:focus, select:focus, textarea:focus { border-color: var(--purple); }
   text-align: center;
   background: var(--purple);
   border-radius: var(--radius);
-  padding: 32px 24px;
+  padding: 24px 24px 20px;
   box-shadow: var(--shadow-lg);
 }
 
-.room-code-label { font-size: 0.85rem; color: rgba(255,255,255,0.75); margin-bottom: 8px; }
+.room-code-label { font-size: 0.9rem; font-weight: 700; color: rgba(255,255,255,0.85); margin-bottom: 12px; }
+
+.room-code-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
 
 .room-code-big {
   font-size: 4.5rem;
@@ -803,10 +809,24 @@ input:focus, select:focus, textarea:focus { border-color: var(--purple); }
   color: var(--yellow);
   letter-spacing: 0.18em;
   line-height: 1;
-  margin-bottom: 10px;
 }
 
-.room-code-hint { font-size: 0.85rem; color: rgba(255,255,255,0.7); }
+.copy-btn {
+  background: rgba(255,255,255,0.15);
+  border: 1.5px solid rgba(255,255,255,0.3);
+  color: var(--white);
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-family: var(--font);
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.copy-btn:hover { background: rgba(255,255,255,0.25); }
+
+.room-code-hint { font-size: 0.82rem; color: rgba(255,255,255,0.65); }
 
 /* ===== 참가자 목록 ===== */
 .player-list {
@@ -851,6 +871,36 @@ input:focus, select:focus, textarea:focus { border-color: var(--purple); }
 @keyframes bounce {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-12px); }
+}
+
+.wait-story-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--purple-dark);
+  background: var(--purple-xlight);
+  padding: 6px 16px;
+  border-radius: var(--radius-pill);
+}
+
+.wait-player-count {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.92rem;
+  color: var(--text);
+}
+
+.wait-player-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--green);
+  border-radius: 50%;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
 }
 
 .wait-name {
@@ -1094,6 +1144,15 @@ textarea {
 .waiting-dots span:nth-child(2) { animation-delay: 0.2s; }
 .waiting-dots span:nth-child(3) { animation-delay: 0.4s; }
 
+.waiting-turn-hint {
+  font-size: 0.85rem;
+  color: var(--muted);
+  background: var(--gray-bg);
+  padding: 6px 16px;
+  border-radius: var(--radius-pill);
+  margin-top: 4px;
+}
+
 @keyframes pulse {
   0%, 100% { opacity: 0.2; transform: scale(0.7); }
   50% { opacity: 1; transform: scale(1); }
@@ -1304,6 +1363,35 @@ textarea {
   align-items: center;
   gap: 10px;
   margin-top: 4px;
+}
+
+/* ===== 방 만들기 상세 설정 토글 ===== */
+.advanced-toggle {
+  background: none;
+  border: 1.5px dashed var(--gray-border);
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: var(--font);
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
+}
+.advanced-toggle:hover {
+  border-color: var(--purple);
+  color: var(--purple);
+}
+
+.advanced-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--gray-bg);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  border: 1.5px solid var(--gray-border);
 }
 
 /* ===== 반 서재 연결 (방 만들기 폼) ===== */
@@ -1728,6 +1816,13 @@ textarea {
 }
 .start-mode-tab:hover:not(.active) {
   color: var(--text);
+}
+
+.start-mode-desc {
+  font-size: 0.84rem;
+  color: var(--muted);
+  text-align: center;
+  margin-top: -4px;
 }
 
 /* ===== 모둠 나누기 (대기 화면) ===== */
