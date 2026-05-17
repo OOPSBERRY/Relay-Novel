@@ -86,14 +86,14 @@ export default function ClassLibrary({ classCode, className, classId, onRead, on
 
       {showPasswordInput && !isTeacher && (
         <div className="teacher-login-box">
-          <p className="teacher-login-title">반 서재 비밀번호</p>
+          <p className="teacher-login-title">교사 비밀번호</p>
           <div className="teacher-login-row">
             <input
               type="password"
               value={passwordInput}
               onChange={e => setPasswordInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleTeacherLogin()}
-              placeholder="교사 비밀번호 (방 만들 때 설정한 비밀번호)"
+              placeholder="교사 비밀번호"
               autoFocus
             />
             <button className="btn btn-primary btn-sm" onClick={handleTeacherLogin}>확인</button>
