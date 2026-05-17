@@ -121,6 +121,13 @@ export default function ClassLibrary({ classCode, className, classId, onRead, on
               <button className="book-card" onClick={() => onRead(story.code, story.title)}>
                 <div className="book-cover" style={getCoverStyle(story.code)}>
                   <span className="book-cover-title">{story.title}</span>
+                  {isTeacher && (
+                    <button
+                      className="book-delete-btn"
+                      onClick={e => { e.stopPropagation(); handleDelete(story.code, story.title); }}
+                      title="서재에서 삭제"
+                    >×</button>
+                  )}
                 </div>
                 <div className="book-info">
                   <p className="book-title">{story.title}</p>
@@ -129,13 +136,6 @@ export default function ClassLibrary({ classCode, className, classId, onRead, on
                   </p>
                 </div>
               </button>
-              {isTeacher && (
-                <button
-                  className="book-delete-btn"
-                  onClick={() => handleDelete(story.code, story.title)}
-                  title="서재에서 삭제"
-                >×</button>
-              )}
             </div>
           ))}
         </div>
