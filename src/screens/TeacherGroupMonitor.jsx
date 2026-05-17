@@ -4,7 +4,7 @@ import ReadAloudMode from './ReadAloudMode';
 
 function GroupCard({ groupIndex, roomCode, onReadAloud, onViewStory }) {
   const [room, setRoom] = useState(null);
-  const [sentenceCount, setSentenceCount] = useState(0);
+  const [sentences, setSentences] = useState([]);
 
   useEffect(() => {
     let active = true;
@@ -14,12 +14,11 @@ function GroupCard({ groupIndex, roomCode, onReadAloud, onViewStory }) {
       if (!active) return;
       if (r) setRoom(r);
 
-      const { count } = await supabase
-        .from('sentences')
-        .select('*', { count: 'exact', head: true })
-        .eq('room_code', roomCode)
-        .eq('skipped', false);
-      if (active) setSentenceCount(count || 0);
+      const { data: s } = await supabase
+        .from('sentences').select('*')
+        .eq('room_code', roomCode).eq('skipped', false)
+        .order('order_index');
+      if (active) setSentences(s || []);
     }
 
     fetchData();
@@ -32,7 +31,10 @@ function GroupCard({ groupIndex, roomCode, onReadAloud, onViewStory }) {
       )
       .on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'sentences', filter: `room_code=eq.${roomCode}` },
-        ({ new: s }) => { if (active && !s.skipped) setSentenceCount(prev => prev + 1); }
+        ({ new: s }) => {
+          if (active && !s.skipped)
+            setSentences(prev => [...prev, s].sort((a, b) => a.order_index - b.order_index));
+        }
       )
       .subscribe();
 
@@ -55,6 +57,7 @@ function GroupCard({ groupIndex, roomCode, onReadAloud, onViewStory }) {
   const hasFirstSentence = !!(room.hint && room.hint.trim());
   const hintOffset = hasFirstSentence ? 1 : 0;
   const playerCount = (room.player_order || []).length;
+  const sentenceCount = sentences.length;
   const currentIdx = (sentenceCount - hintOffset) % (playerCount || 1);
   const currentId = (room.player_order || [])[Math.max(0, currentIdx)];
   const currentName = currentId ? (room.player_names || {})[currentId] : '';
@@ -62,6 +65,7 @@ function GroupCard({ groupIndex, roomCode, onReadAloud, onViewStory }) {
   const total = room.max_sentences - hintOffset;
   const pct = Math.min(100, Math.round((progress / total) * 100));
   const players = Object.values(room.player_names || {});
+  const recentSentences = sentences.slice(-3);
 
   return (
     <div className={`group-card ${isFinished ? 'group-card-finished' : ''}`}>
@@ -85,6 +89,17 @@ function GroupCard({ groupIndex, roomCode, onReadAloud, onViewStory }) {
         </div>
         <span className="group-progress-text">{progress} / {total}</span>
       </div>
+
+      {recentSentences.length > 0 && (
+        <div className="group-sentences">
+          {recentSentences.map((s, i) => (
+            <div key={s.id} className={`group-sentence-row ${i === recentSentences.length - 1 ? 'group-sentence-latest' : ''}`}>
+              <span className="group-sentence-author">{s.player_name}</span>
+              <span className="group-sentence-text">{s.text}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {isFinished ? (
         <div className="group-card-actions">
