@@ -40,7 +40,7 @@ export default function ClassSetup({ onEnter, onBack }) {
       <div className="join-hero">
         <div className="home-icon">📚</div>
         <h2>반 서재 보기</h2>
-        <p className="muted">선생님에게 반 코드와 비밀번호를 받아 입력하세요</p>
+        <p className="muted">선생님에게 반 코드를 받아 입력하세요</p>
       </div>
 
       <div className="form">
@@ -55,13 +55,13 @@ export default function ClassSetup({ onEnter, onBack }) {
           autoFocus
         />
 
-        <label>반 서재 비밀번호</label>
+        <label>교사 비밀번호</label>
         <input
           type="password"
           value={password}
           onChange={e => setPassword(e.target.value.slice(0, 20))}
           onKeyDown={e => e.key === 'Enter' && handleEnter()}
-          placeholder="선생님이 알려준 반 서재 비밀번호"
+          placeholder="방 만들 때 설정한 교사 비밀번호"
         />
 
         {error && <p className="error">{error}</p>}

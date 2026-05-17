@@ -21,7 +21,6 @@ export default function TeacherEntry({ onCreated, onBack }) {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const [classCode, setClassCode] = useState('');
-  const [classPassword, setClassPassword] = useState('');
   const [className, setClassName] = useState('');
 
   const [loading, setLoading] = useState(false);
@@ -35,12 +34,10 @@ export default function TeacherEntry({ onCreated, onBack }) {
     let classId = null;
 
     if (classCode.length === 4) {
-      if (classPassword.length < 4) { setError('반 서재 비밀번호를 4자리 이상 입력해주세요.'); return; }
-
       const { data: existing } = await supabase
         .from('classes').select('id')
         .eq('class_code', classCode)
-        .eq('teacher_password', classPassword)
+        .eq('teacher_password', password)
         .single();
 
       if (existing) {
@@ -49,7 +46,7 @@ export default function TeacherEntry({ onCreated, onBack }) {
         if (!className.trim()) { setError('처음 만드는 반 서재라면 반 이름을 입력해주세요.'); return; }
         const { data: newClass, error: classErr } = await supabase
           .from('classes')
-          .insert({ class_code: classCode, name: className.trim(), teacher_password: classPassword })
+          .insert({ class_code: classCode, name: className.trim(), teacher_password: password })
           .select('id').single();
         if (classErr) { setError('반 서재 생성에 실패했어요. 다시 시도해주세요.'); return; }
         classId = newClass.id;
@@ -121,7 +118,7 @@ export default function TeacherEntry({ onCreated, onBack }) {
 
             <div className="class-link-section">
               <p className="class-link-label">📚 반 서재 연결 <span className="label-opt">(선택)</span></p>
-              <p className="input-hint">완성된 이야기를 반 서재에 자동으로 저장합니다</p>
+              <p className="input-hint">완성된 이야기를 반 서재에 자동 저장합니다 · 반 서재 비밀번호는 위의 교사 비밀번호와 동일합니다</p>
 
               <label>반 코드 (4자리 숫자)</label>
               <input
@@ -133,12 +130,8 @@ export default function TeacherEntry({ onCreated, onBack }) {
 
               {classCode.length === 4 && (
                 <>
-                  <label>반 서재 비밀번호 *</label>
-                  <input type="password" value={classPassword} onChange={e => setClassPassword(e.target.value.slice(0, 20))} placeholder="예: abc123" />
-
                   <label>반 이름 <span className="label-opt">(처음 만들 때만)</span></label>
                   <input value={className} onChange={e => setClassName(e.target.value)} placeholder="예: 3학년 2반 (기존 서재면 비워도 됩니다)" maxLength={20} />
-                  <p className="input-hint">같은 코드+비밀번호 조합이 이미 있으면 기존 서재에 연결됩니다</p>
                 </>
               )}
             </div>
