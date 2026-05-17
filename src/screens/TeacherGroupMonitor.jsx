@@ -16,13 +16,13 @@ function GroupCard({ groupIndex, roomCode, onReadAloud, onViewStory }) {
 
       const { data: s } = await supabase
         .from('sentences').select('*')
-        .eq('room_code', roomCode).eq('skipped', false)
+        .eq('room_code', roomCode).neq('skipped', true)
         .order('order_index');
       if (active) setSentences(s || []);
     }
 
     fetchData();
-    const poll = setInterval(fetchData, 3000);
+    const poll = setInterval(fetchData, 1500);
 
     const channel = supabase.channel(`group-card-${roomCode}`)
       .on('postgres_changes',
@@ -32,7 +32,7 @@ function GroupCard({ groupIndex, roomCode, onReadAloud, onViewStory }) {
       .on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'sentences', filter: `room_code=eq.${roomCode}` },
         ({ new: s }) => {
-          if (active && !s.skipped)
+          if (active && s.skipped !== true)
             setSentences(prev => [...prev, s].sort((a, b) => a.order_index - b.order_index));
         }
       )
