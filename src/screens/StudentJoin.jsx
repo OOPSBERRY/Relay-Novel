@@ -27,7 +27,7 @@ export default function StudentJoin({ onJoined, onBack }) {
     setLoading(true);
     try {
       const { data: room, error: roomErr } = await supabase
-        .from('rooms').select('status, player_names, group_room_codes').eq('code', code).single();
+        .from('rooms').select('*').eq('code', code).single();
 
       if (roomErr || !room) { setError('방을 찾을 수 없어요. 코드를 다시 확인해주세요.'); setLoading(false); return; }
 
@@ -47,7 +47,7 @@ export default function StudentJoin({ onJoined, onBack }) {
 
       // 모둠 진행 중: 각 모둠 방에서 이름 검색
       if (room.status === 'group_monitoring') {
-        const found = await findPlayerInGroups(room.group_room_codes || [], name.trim());
+        const found = await findPlayerInGroups(room.player_order || [], name.trim());
         if (found) {
           sessionStorage.setItem(SESSION_KEY, JSON.stringify({ roomCode: found.roomCode, myId: found.playerId, myName: name.trim() }));
           onJoined(found.roomCode, found.playerId, name.trim());

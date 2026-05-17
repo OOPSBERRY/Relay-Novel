@@ -44,7 +44,7 @@ export default function App() {
             if (room.status === 'waiting') setScreen('teacher-wait');
             else if (room.status === 'playing') setScreen('teacher-monitor');
             else if (room.status === 'group_monitoring') {
-              setGroupRoomCodes(room.group_room_codes || []);
+              setGroupRoomCodes(room.player_order || []);
               setScreen('teacher-group-monitor');
             }
             setRecovering(false);

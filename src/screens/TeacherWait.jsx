@@ -35,7 +35,7 @@ export default function TeacherWait({ roomCode, onStarted, onGroupStarted, onBac
         setRoomData(room);
         if (room.status === 'playing') { onStartedRef.current(); return; }
         if (room.status === 'group_monitoring') {
-          onGroupStartedRef.current(room.group_room_codes || []);
+          onGroupStartedRef.current(room.player_order || []);
           return;
         }
       }
@@ -54,7 +54,7 @@ export default function TeacherWait({ roomCode, onStarted, onGroupStarted, onBac
           setRoomData(room);
           if (room.status === 'playing') onStartedRef.current();
           if (room.status === 'group_monitoring') {
-            onGroupStartedRef.current(room.group_room_codes || []);
+            onGroupStartedRef.current(room.player_order || []);
           }
         }
       )
@@ -110,13 +110,17 @@ export default function TeacherWait({ roomCode, onStarted, onGroupStarted, onBac
         shuffled.filter((_, j) => j % groupCount === i)
       );
 
-      const childCodes = [];
       const now = new Date().toISOString();
-
       const hasFirst = !!(roomData.hint && roomData.hint.trim());
 
+      // 모둠 코드 미리 생성 (순서 보장 필요)
+      const childCodes = [];
       for (let i = 0; i < groupCount; i++) {
-        const code = await generateUniqueRoomCode();
+        childCodes.push(await generateUniqueRoomCode());
+      }
+
+      // 모둠 방 생성 + 플레이어 이동 병렬 처리
+      await Promise.all(childCodes.map(async (code, i) => {
         const groupPlayers = groups[i];
         const playerOrder = groupPlayers.map(p => p.id);
         const playerNames = Object.fromEntries(groupPlayers.map(p => [p.id, p.name]));
@@ -134,29 +138,26 @@ export default function TeacherWait({ roomCode, onStarted, onGroupStarted, onBac
           player_order: playerOrder,
           player_names: playerNames,
           turn_started_at: now,
-          parent_room_code: roomCode,
         });
 
-        if (hasFirst) {
-          await supabase.from('sentences').insert({
+        // 첫 문장 삽입 + 플레이어 이동 병렬
+        await Promise.all([
+          hasFirst ? supabase.from('sentences').insert({
             room_code: code,
             text: roomData.hint.trim(),
             player_name: '선생님',
             order_index: 0,
             skipped: false,
-          });
-        }
-
-        for (const p of groupPlayers) {
-          await supabase.from('players').update({ room_code: code }).eq('id', p.id);
-        }
-
-        childCodes.push(code);
-      }
+          }) : Promise.resolve(),
+          ...groupPlayers.map(p =>
+            supabase.from('players').update({ room_code: code }).eq('id', p.id)
+          ),
+        ]);
+      }));
 
       await supabase.from('rooms').update({
         status: 'group_monitoring',
-        group_room_codes: childCodes,
+        player_order: childCodes,
       }).eq('code', roomCode);
     } catch (err) {
       alert(err.message);
