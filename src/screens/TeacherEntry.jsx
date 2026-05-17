@@ -18,7 +18,7 @@ export default function TeacherEntry({ onCreated, onBack }) {
   const [maxSentences, setMaxSentences] = useState(20);
   const [turnTimeLimit, setTurnTimeLimit] = useState(0);
   const [password, setPassword] = useState('');
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(true);
 
   const [classCode, setClassCode] = useState('');
   const [className, setClassName] = useState('');
