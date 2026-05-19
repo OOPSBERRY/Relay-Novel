@@ -7,23 +7,37 @@ export default async function handler(req, res) {
   if (!text || text.trim().length === 0) return res.json({ result: null });
 
   try {
-    const response = await fetch(
-      `https://m.search.naver.com/p/csearch/ocontent/util/SpellerProxy?q=${encodeURIComponent(text)}&color_blindness=0`,
-      {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Linux; Android 10; SM-G973F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36',
-          'Referer': 'https://search.naver.com/search.naver?query=%EB%A7%9E%EC%B6%A4%EB%B2%95+%EA%B2%80%EC%82%AC%EA%B8%B0',
-          'Accept': 'application/json, text/javascript, */*; q=0.01',
-          'Accept-Language': 'ko-KR,ko;q=0.9',
-          'X-Requested-With': 'XMLHttpRequest',
-          'Origin': 'https://search.naver.com',
-        },
-      }
-    );
+    // 부산대 한국어 맞춤법/문법 검사기
+    const params = new URLSearchParams({ text1: text.trim() });
+    const response = await fetch('https://speller.cs.pusan.ac.kr/results', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'User-Agent': 'Mozilla/5.0',
+        'Referer': 'https://speller.cs.pusan.ac.kr/',
+      },
+      body: params.toString(),
+    });
 
-    if (!response.ok) return res.json({ error: true, status: response.status });
+    if (!response.ok) throw new Error(`status ${response.status}`);
     const data = await response.json();
-    return res.json(data);
+
+    // 부산대 응답 → 기존 네이버 형식으로 변환
+    const errors = (data?.errInfo || []).map(e => ({
+      str_before: e.orgStr,
+      str_after: e.candWord?.split('|')[0] || e.orgStr,
+      error_idx: 1,
+      info_msg: e.help || '',
+    }));
+
+    return res.json({
+      message: {
+        result: {
+          errata_count: errors.length,
+          result: errors,
+        }
+      }
+    });
   } catch (e) {
     return res.json({ error: true, message: e.message });
   }

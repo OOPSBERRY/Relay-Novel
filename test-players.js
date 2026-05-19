@@ -176,4 +176,3 @@ async function main() {
 }
 
 main().catch(console.error);
-node test-players.js 9155 20

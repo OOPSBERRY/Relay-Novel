@@ -110,6 +110,35 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
     setSpellResult(null);
   }
 
+  // 내 차례에 시간 초과 → 3초 후 자동 패스
+  useEffect(() => {
+    if (!room || timeLeft === null || timeLeft > 0) return;
+    const allSents = sentences.filter(s => !s.skipped);
+    const hasFirst = !!(room.hint?.trim());
+    const hintOffset = hasFirst ? 1 : 0;
+    const playerCount = room.player_order?.length || 1;
+    const currentIdx = (allSents.length - hintOffset) % playerCount;
+    const currentPlayerId = room.player_order?.[Math.max(0, currentIdx)];
+    if (currentPlayerId !== myId) return;
+
+    const timer = setTimeout(async () => {
+      const orderIndex = sentences.length;
+      const { data: existing } = await supabase
+        .from('sentences').select('id').eq('room_code', roomCode).eq('order_index', orderIndex).maybeSingle();
+      if (existing) return;
+      const isLast = orderIndex + 1 >= room.max_sentences;
+      await supabase.from('sentences').insert({
+        room_code: roomCode, text: '(패스)', player_name: myName,
+        order_index: orderIndex, skipped: true,
+      });
+      await supabase.from('rooms').update({
+        turn_started_at: new Date().toISOString(),
+        ...(isLast ? { status: 'finished' } : {}),
+      }).eq('code', roomCode);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [timeLeft, room?.turn_started_at]);
+
   async function handleSubmit() {
     if (!text.trim() || submitting || !room) return;
     if (containsProfanity(text)) { setProfanityError(true); return; }
@@ -220,7 +249,7 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
               </div>
 
               {spellResult !== null && (
-                <div className={`spell-panel ${spellErrors.length > 0 ? 'spell-has-errors' : 'spell-ok'}`}>
+                <div className={`spell-panel ${spellResult.error || spellErrors.length > 0 ? 'spell-has-errors' : 'spell-ok'}`}>
                   {spellResult.error ? (
                     <p className="spell-panel-msg">맞춤법 검사 중 오류가 발생했어요.</p>
                   ) : spellErrors.length === 0 ? (
