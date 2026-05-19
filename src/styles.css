@@ -79,6 +79,38 @@ body {
   letter-spacing: 0.05em;
 }
 
+.readaloud-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.readaloud-tts-btn {
+  background: rgba(255,255,255,0.1);
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.readaloud-tts-btn:hover { background: rgba(255,255,255,0.2); }
+
+.readaloud-voice-select {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: white;
+  font-size: 0.8rem;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-family: var(--font);
+  cursor: pointer;
+}
+
 .readaloud-progress {
   font-size: 1rem;
   font-weight: 700;
