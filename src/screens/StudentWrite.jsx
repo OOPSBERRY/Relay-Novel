@@ -110,7 +110,7 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
     setSpellResult(null);
   }
 
-  // 내 차례에 시간 초과 → 3초 후 자동 패스
+  // 내 차례에 시간 초과 → 3초 후 자동 패스 (DB 재조회로 stale 방지)
   useEffect(() => {
     if (!room || timeLeft === null || timeLeft > 0) return;
     const allSents = sentences.filter(s => !s.skipped);
@@ -118,15 +118,31 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
     const hintOffset = hasFirst ? 1 : 0;
     const playerCount = room.player_order?.length || 1;
     const currentIdx = (allSents.length - hintOffset) % playerCount;
-    const currentPlayerId = room.player_order?.[Math.max(0, currentIdx)];
-    if (currentPlayerId !== myId) return;
+    if (room.player_order?.[Math.max(0, currentIdx)] !== myId) return;
 
     const timer = setTimeout(async () => {
-      const orderIndex = sentences.length;
-      const { data: existing } = await supabase
-        .from('sentences').select('id').eq('room_code', roomCode).eq('order_index', orderIndex).maybeSingle();
-      if (existing) return;
-      const isLast = orderIndex + 1 >= room.max_sentences;
+      // DB에서 최신 상태 재조회
+      const { data: freshRoom } = await supabase
+        .from('rooms').select('*').eq('code', roomCode).single();
+      if (!freshRoom || freshRoom.status !== 'playing') return;
+
+      const { data: freshSents } = await supabase
+        .from('sentences').select('id, order_index').eq('room_code', roomCode).neq('skipped', true);
+      const freshCount = freshSents?.length || 0;
+
+      // 아직 내 차례인지 재확인
+      const hasFirstF = !!(freshRoom.hint?.trim());
+      const hintOffsetF = hasFirstF ? 1 : 0;
+      const playerCountF = freshRoom.player_order?.length || 1;
+      const currentIdxF = (freshCount - hintOffsetF) % playerCountF;
+      if (freshRoom.player_order?.[Math.max(0, currentIdxF)] !== myId) return;
+
+      // 타이머가 아직 만료 상태인지 확인
+      const elapsed = (Date.now() - new Date(freshRoom.turn_started_at).getTime()) / 1000;
+      if (elapsed < freshRoom.turn_time_limit) return;
+
+      const orderIndex = freshSents?.length || 0;
+      const isLast = orderIndex + 1 >= freshRoom.max_sentences;
       await supabase.from('sentences').insert({
         room_code: roomCode, text: '(패스)', player_name: myName,
         order_index: orderIndex, skipped: true,
