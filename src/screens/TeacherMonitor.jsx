@@ -6,7 +6,10 @@ export default function TeacherMonitor({ roomCode, onFinished, onBack }) {
   const [sentences, setSentences] = useState([]);
   const [ending, setEnding] = useState(false);
   const [timeLeft, setTimeLeft] = useState(null);
+  const [autoSkipCount, setAutoSkipCount] = useState(null);
   const timerInterval = useRef(null);
+  const autoSkipTimer = useRef(null);
+  const skipping = useRef(false);
   const onFinishedRef = useRef(onFinished);
   useEffect(() => { onFinishedRef.current = onFinished; }, [onFinished]);
 
@@ -65,6 +68,26 @@ export default function TeacherMonitor({ roomCode, onFinished, onBack }) {
     return () => clearInterval(timerInterval.current);
   }, [room?.turn_started_at, room?.turn_time_limit]);
 
+  // 시간 초과 시 자동 패스 (3초 카운트다운)
+  useEffect(() => {
+    clearInterval(autoSkipTimer.current);
+    if (timeLeft !== 0 || !room?.turn_time_limit || ending || skipping.current) {
+      setAutoSkipCount(null);
+      return;
+    }
+    setAutoSkipCount(3);
+    let count = 3;
+    autoSkipTimer.current = setInterval(() => {
+      count -= 1;
+      setAutoSkipCount(count);
+      if (count <= 0) {
+        clearInterval(autoSkipTimer.current);
+        if (!skipping.current) handleSkip();
+      }
+    }, 1000);
+    return () => clearInterval(autoSkipTimer.current);
+  }, [timeLeft, room?.turn_started_at]);
+
   async function handleForceEnd() {
     if (!window.confirm('소설을 지금 끝낼까요?')) return;
     setEnding(true);
@@ -72,7 +95,9 @@ export default function TeacherMonitor({ roomCode, onFinished, onBack }) {
   }
 
   async function handleSkip() {
-    if (!room) return;
+    if (!room || skipping.current) return;
+    skipping.current = true;
+    setAutoSkipCount(null);
     const orderIndex = sentences.length;
     const isLast = orderIndex + 1 >= room.max_sentences;
     await supabase.from('sentences').insert({
@@ -86,6 +111,7 @@ export default function TeacherMonitor({ roomCode, onFinished, onBack }) {
       turn_started_at: new Date().toISOString(),
       ...(isLast ? { status: 'finished' } : {}),
     }).eq('code', roomCode);
+    skipping.current = false;
   }
 
   if (!room) return <div className="screen screen-center"><p className="muted">불러오는 중...</p></div>;
@@ -119,9 +145,14 @@ export default function TeacherMonitor({ roomCode, onFinished, onBack }) {
         </div>
         <div className="monitor-actions">
           {isTimeUp && (
-            <button className="btn btn-primary btn-sm" onClick={handleSkip}>
-              ⏭ 다음으로 넘기기
-            </button>
+            <div className="auto-skip-wrap">
+              {autoSkipCount !== null && (
+                <span className="auto-skip-count">{autoSkipCount}초 후 자동 패스</span>
+              )}
+              <button className="btn btn-primary btn-sm" onClick={handleSkip}>
+                ⏭ 지금 넘기기
+              </button>
+            </div>
           )}
           <button className="btn btn-danger btn-sm" onClick={handleForceEnd} disabled={ending}>
             이야기 끝내기

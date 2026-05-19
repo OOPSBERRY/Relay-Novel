@@ -1040,6 +1040,35 @@ input:focus, select:focus, textarea:focus { border-color: var(--purple); }
 
 .write-title { font-size: 1.2rem; font-weight: 900; color: var(--text); }
 
+.my-group-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.my-group-chip {
+  font-size: 0.78rem;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--gray-bg);
+  color: var(--muted);
+  font-weight: 600;
+  border: 2px solid transparent;
+}
+
+.my-group-me {
+  background: var(--purple-light);
+  color: var(--purple-dark);
+  border-color: var(--purple);
+}
+
+.my-group-current {
+  background: var(--yellow-soft);
+  color: var(--dark);
+  border-color: var(--yellow);
+}
+
 .write-progress { display: flex; align-items: center; gap: 10px; }
 
 .hint-box {
@@ -1190,6 +1219,19 @@ textarea {
 
 .turn-warning { border-color: #FCD34D; }
 .turn-expired { border-color: var(--red); background: #FFF5F5; }
+
+.auto-skip-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.auto-skip-count {
+  font-size: 0.85rem;
+  color: var(--red);
+  font-weight: 700;
+  animation: blink 1s ease-in-out infinite;
+}
 
 .time-up-msg {
   text-align: center;

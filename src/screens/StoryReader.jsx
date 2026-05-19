@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
+import ReadAloudMode from './ReadAloudMode';
 
 const COVER_GRADIENTS = [
   ['#667EEA', '#764BA2'], ['#F093FB', '#F5576C'],
@@ -19,6 +20,7 @@ export default function StoryReader({ roomCode, onBack }) {
   const [room, setRoom] = useState(null);
   const [sentences, setSentences] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [readAloud, setReadAloud] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -41,6 +43,11 @@ export default function StoryReader({ roomCode, onBack }) {
   const today = new Date(room.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
 
   return (
+    <>
+      {readAloud && (
+        <ReadAloudMode sentences={sentences} title={room.title} onClose={() => setReadAloud(false)} />
+      )}
+
     <div className="screen reader-screen">
       {/* 화면용 */}
       <div className="no-print">
@@ -64,6 +71,7 @@ export default function StoryReader({ roomCode, onBack }) {
         </div>
 
         <div className="reader-footer-bar no-print">
+          <button className="btn btn-readaloud" onClick={() => setReadAloud(true)}>📖 낭독 모드</button>
           <button className="btn btn-print" onClick={handlePrint}>🖨️ 인쇄 / PDF</button>
         </div>
       </div>
@@ -95,5 +103,6 @@ export default function StoryReader({ roomCode, onBack }) {
         </div>
       </div>
     </div>
+    </>
   );
 }

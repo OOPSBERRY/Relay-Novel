@@ -64,14 +64,18 @@ export default function StudentJoin({ onJoined, onBack }) {
         return;
       }
 
-      // 대기 중인 방: 정상 입장
-      const playerId = crypto.randomUUID();
-      const { error: insertErr } = await supabase.from('players').insert({
-        id: playerId,
-        room_code: code,
-        name: name.trim(),
-      });
-      if (insertErr) throw insertErr;
+      // 대기 중인 방: 같은 이름이 이미 있으면 재사용, 없으면 새로 생성
+      const { data: existing } = await supabase
+        .from('players').select('id').eq('room_code', code).eq('name', name.trim()).single();
+
+      const playerId = existing ? existing.id : crypto.randomUUID();
+
+      if (!existing) {
+        const { error: insertErr } = await supabase.from('players').insert({
+          id: playerId, room_code: code, name: name.trim(),
+        });
+        if (insertErr) throw insertErr;
+      }
 
       sessionStorage.setItem(SESSION_KEY, JSON.stringify({ roomCode: code, myId: playerId, myName: name.trim() }));
       onJoined(code, playerId, name.trim());

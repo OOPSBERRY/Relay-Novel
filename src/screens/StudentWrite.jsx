@@ -160,6 +160,19 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
           </div>
           <span className="progress-text">{progress} / {total}</span>
         </div>
+        <div className="my-group-row">
+          {room.player_order.map((id, i) => {
+            const name = room.player_names[id];
+            const isMe = id === myId;
+            const isCurrent = i === currentIdx;
+            return (
+              <span key={id} className={`my-group-chip ${isMe ? 'my-group-me' : ''} ${isCurrent ? 'my-group-current' : ''}`}>
+                {isMe ? '나' : name}
+                {isCurrent && ' ✍️'}
+              </span>
+            );
+          })}
+        </div>
       </div>
 
       <div className="recent-story">
@@ -187,12 +200,12 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
           </div>
 
           {isTimeUp ? (
-            <div className="time-up-msg">선생님을 기다려주세요...</div>
+            <div className="time-up-msg">⏰ 시간이 초과되었어요. 자동으로 다음 사람에게 넘어갑니다...</div>
           ) : (
             <>
-              <textarea value={text} onChange={handleTextChange} placeholder="이야기를 이어가 볼까요?" maxLength={200} rows={3} autoFocus />
+              <textarea value={text} onChange={handleTextChange} placeholder="이야기를 이어가 볼까요?" maxLength={120} rows={3} autoFocus />
               <div className="spell-action-row">
-                <span className="char-count">{text.length} / 200자</span>
+                <span className="char-count">{text.length} / 120자</span>
                 <button
                   className="btn-spell-check"
                   onClick={handleSpellCheck}
