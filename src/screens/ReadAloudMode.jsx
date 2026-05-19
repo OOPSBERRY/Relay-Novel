@@ -1,53 +1,15 @@
-import { useState, useEffect, useRef } from 'react';
-
-function speak(text, voice, onEnd) {
-  const synth = window.speechSynthesis;
-  synth.cancel();
-  const utter = new SpeechSynthesisUtterance(text);
-  utter.lang = 'ko-KR';
-  utter.rate = 0.9;
-  if (voice) utter.voice = voice;
-  if (onEnd) utter.onend = onEnd;
-  synth.speak(utter);
-}
+import { useState } from 'react';
 
 export default function ReadAloudMode({ sentences, title, onClose }) {
   const [current, setCurrent] = useState(0);
-  const [ttsOn, setTtsOn] = useState(true);
-  const [voices, setVoices] = useState([]);
-  const [voiceIdx, setVoiceIdx] = useState(0);
   const isDone = current >= sentences.length;
-  const speakingRef = useRef(false);
-
-  useEffect(() => {
-    function loadVoices() {
-      const ko = window.speechSynthesis.getVoices().filter(v => v.lang.startsWith('ko'));
-      setVoices(ko);
-    }
-    loadVoices();
-    window.speechSynthesis.onvoiceschanged = loadVoices;
-    return () => { window.speechSynthesis.cancel(); };
-  }, []);
-
-  useEffect(() => {
-    if (!ttsOn || current === 0 || isDone) return;
-    const s = sentences[current - 1];
-    if (s) speak(s.text, voices[voiceIdx], () => { speakingRef.current = false; });
-  }, [current]);
 
   function handleNext() {
-    if (isDone) return;
-    window.speechSynthesis.cancel();
-    setCurrent(prev => prev + 1);
+    if (!isDone) setCurrent(prev => prev + 1);
   }
 
   function handleKeyDown(e) {
     if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') handleNext();
-  }
-
-  function toggleTts() {
-    if (ttsOn) window.speechSynthesis.cancel();
-    setTtsOn(v => !v);
   }
 
   return (
@@ -55,23 +17,7 @@ export default function ReadAloudMode({ sentences, title, onClose }) {
       <div className="readaloud-header">
         <p className="readaloud-title">{title}</p>
         <div className="readaloud-progress">{current} / {sentences.length}</div>
-        <div className="readaloud-header-right">
-          {voices.length > 1 && (
-            <select
-              className="readaloud-voice-select"
-              value={voiceIdx}
-              onChange={e => setVoiceIdx(Number(e.target.value))}
-            >
-              {voices.map((v, i) => (
-                <option key={i} value={i}>{v.name}</option>
-              ))}
-            </select>
-          )}
-          <button className="readaloud-tts-btn" onClick={toggleTts} title={ttsOn ? '음성 끄기' : '음성 켜기'}>
-            {ttsOn ? '🔊' : '🔇'}
-          </button>
-          <button className="projector-close" onClick={onClose}>✕ 닫기</button>
-        </div>
+        <button className="projector-close" onClick={onClose}>✕ 닫기</button>
       </div>
 
       <div className="readaloud-body">

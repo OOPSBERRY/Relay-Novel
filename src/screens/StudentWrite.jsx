@@ -82,9 +82,13 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
     setSpellChecking(true);
     setSpellResult(null);
     try {
-      const res = await fetch(`/api/spellcheck?text=${encodeURIComponent(text)}`);
+      const res = await fetch(`/api/spellcheck?text=${encodeURIComponent(text.trim())}`);
       const data = await res.json();
-      setSpellResult(data?.message?.result ?? null);
+      if (data?.error || !data?.message?.result) {
+        setSpellResult({ error: true });
+      } else {
+        setSpellResult(data.message.result);
+      }
     } catch {
       setSpellResult({ error: true });
     } finally {
