@@ -47,7 +47,7 @@ export default function ClassLibrary({ classCode, className, classId, onRead, on
   async function handleTeacherLogin() {
     setPasswordError('');
     const { data } = await supabase
-      .from('classes').select('teacher_password').eq('class_code', classCode).single();
+      .from('classes').select('teacher_password').eq('id', classId).single();
     if (!data || data.teacher_password !== passwordInput) {
       setPasswordError('비밀번호가 틀렸어요.');
       return;
