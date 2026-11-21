@@ -81,6 +81,10 @@ export default function TeacherEntry({ onCreated, onBack }) {
     <div className="screen">
       <button className="back-btn" onClick={onBack}>← 뒤로</button>
 
+      <div className="join-hero">
+        <h2>새 이야기 만들기</h2>
+      </div>
+
       <div className="form">
         <label>소설 제목 *</label>
         <input value={title} onChange={e => setTitle(e.target.value)} placeholder="예: 우리 반의 대모험" maxLength={50} autoFocus />
@@ -93,7 +97,7 @@ export default function TeacherEntry({ onCreated, onBack }) {
           className="advanced-toggle"
           onClick={() => setShowAdvanced(v => !v)}
         >
-          {showAdvanced ? '▲ 상세 설정 접기' : '▼ 상세 설정 (첫 문장 · 턴 수 · 시간 제한 · 반 서재)'}
+          {showAdvanced ? '상세 설정 접기  −' : '상세 설정 (첫 문장 · 턴 수 · 시간 제한 · 반 서재)  +'}
         </button>
 
         {showAdvanced && (
@@ -117,7 +121,7 @@ export default function TeacherEntry({ onCreated, onBack }) {
             </select>
 
             <div className="class-link-section">
-              <p className="class-link-label">📚 반 서재 연결 <span className="label-opt">(선택)</span></p>
+              <p className="class-link-label">반 서재 연결 <span className="label-opt">(선택)</span></p>
               <p className="input-hint">완성된 이야기를 반 서재에 자동 저장합니다 · 반 서재 비밀번호는 위의 교사 비밀번호와 동일합니다</p>
 
               <label>반 코드 (4자리 숫자)</label>

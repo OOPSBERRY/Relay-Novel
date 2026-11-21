@@ -1,18 +1,15 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 
-const COVER_GRADIENTS = [
-  ['#667EEA', '#764BA2'], ['#F093FB', '#F5576C'],
-  ['#4FACFE', '#00F2FE'], ['#43E97B', '#38F9D7'],
-  ['#FA709A', '#FEE140'], ['#A18CD1', '#FBC2EB'],
-  ['#FCCB90', '#D57EEB'], ['#96FBC4', '#F9F586'],
-  ['#FBC2EB', '#A6C1EE'], ['#FDDB92', '#D1FDFF'],
+// 천 장정 느낌의 단색 표지
+const COVER_COLORS = [
+  '#3E5A48', '#6E2F27', '#2F4058', '#7A5A2C', '#4C3F5E',
+  '#3D4B50', '#8A5A43', '#5A3A2B', '#55603A', '#2E4E52',
 ];
 
 function getCoverStyle(code) {
   const hash = code.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  const [a, b] = COVER_GRADIENTS[hash % COVER_GRADIENTS.length];
-  return { background: `linear-gradient(145deg, ${a}, ${b})` };
+  return { background: COVER_COLORS[hash % COVER_COLORS.length] };
 }
 
 function formatDate(ts) {
@@ -78,7 +75,7 @@ export default function ClassLibrary({ classCode, className, classId, onRead, on
             </button>
           ) : (
             <button className="btn btn-ghost btn-sm" onClick={() => setShowPasswordInput(v => !v)}>
-              👩‍🏫 교사 관리
+              교사 관리
             </button>
           )}
         </div>
@@ -103,14 +100,13 @@ export default function ClassLibrary({ classCode, className, classId, onRead, on
       )}
 
       {isTeacher && (
-        <div className="teacher-mode-bar">🔓 관리 모드 — 책 표지의 × 버튼으로 삭제</div>
+        <div className="teacher-mode-bar">관리 모드 · 표지의 × 버튼으로 서재에서 뺄 수 있어요</div>
       )}
 
       {loading ? (
         <div className="library-empty"><p className="muted">불러오는 중...</p></div>
       ) : stories.length === 0 ? (
         <div className="library-empty">
-          <div style={{ fontSize: '3rem', marginBottom: '12px' }}>📭</div>
           <p className="muted">아직 완성된 이야기가 없어요.</p>
           <p className="muted">이야기를 완성하면 여기에 쌓여요!</p>
         </div>

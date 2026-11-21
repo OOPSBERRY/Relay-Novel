@@ -36,13 +36,13 @@ export default function ReadAloudMode({ sentences, title, onClose }) {
             ))}
           </div>
         )}
-        {isDone && <div className="readaloud-done">🎉 끝!</div>}
+        {isDone && <div className="readaloud-done">끝</div>}
       </div>
 
       <div className="readaloud-footer">
         {!isDone ? (
           <button className="btn readaloud-next-btn" onClick={handleNext}>
-            {current === 0 ? '▶ 시작' : '다음 ▶'}
+            {current === 0 ? '시작' : '다음 →'}
           </button>
         ) : (
           <button className="btn readaloud-next-btn" onClick={onClose}>닫기</button>

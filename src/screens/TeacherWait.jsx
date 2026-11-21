@@ -196,12 +196,12 @@ export default function TeacherWait({ roomCode, onStarted, onGroupStarted, onBac
         </div>
 
         <button className="btn btn-projector" onClick={() => setProjector(true)}>
-          QR 코드 + 방 코드 <span className="btn-sub">(학생들에게 보여주세요.)</span>
+          <span>QR 코드 크게 띄우기</span> <span className="btn-sub">학생들에게 보여주세요 →</span>
         </button>
 
         {roomData && (
           <div className="card">
-            <p>📚 <strong>{roomData.title}</strong></p>
+            <p>{roomData.title}</p>
             {roomData.hint && <p className="muted">첫 문장: {roomData.hint}</p>}
             <p className="muted">최대 {roomData.max_sentences}턴</p>
             {roomData.class_code && (

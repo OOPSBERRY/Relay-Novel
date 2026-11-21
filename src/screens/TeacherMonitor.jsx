@@ -121,12 +121,12 @@ export default function TeacherMonitor({ roomCode, onFinished, onBack }) {
                 <span className="auto-skip-count">{autoSkipCount}초 후 자동 패스</span>
               )}
               <button className="btn btn-primary btn-sm" onClick={() => handleSkip()}>
-                ⏭ 지금 넘기기
+                지금 넘기기
               </button>
             </div>
           ) : (
             <button className="btn btn-ghost btn-sm" onClick={handleManualSkip}>
-              ⏭ 차례 넘기기
+              차례 넘기기
             </button>
           )}
           <button className="btn btn-danger btn-sm" onClick={handleForceEnd} disabled={ending}>
@@ -144,13 +144,13 @@ export default function TeacherMonitor({ roomCode, onFinished, onBack }) {
           <div className="progress-row">
             <p className="progress-text">
               <strong>{progress}</strong> / {total} 문장
-              {currentName && <span className="current-writer"> · 지금: <strong>{currentName}</strong> ✍️</span>}
+              {currentName && <span className="current-writer"> · 지금 <strong>{currentName}</strong></span>}
             </p>
             {timeLeft !== null && (
               <div className={`monitor-timer ${isWarning ? 'timer-warning' : ''} ${isTimeUp ? 'timer-expired' : ''}`}>
                 {isTimeUp
-                  ? `⏰ ${currentName} 시간 초과!`
-                  : `⏱ ${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')}`}
+                  ? `${currentName} 시간 초과`
+                  : `${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')}`}
               </div>
             )}
           </div>
@@ -184,7 +184,7 @@ export default function TeacherMonitor({ roomCode, onFinished, onBack }) {
                   <span className="order-num">{i + 1}</span>
                   <span className="order-name">{room.player_names[id]}</span>
                   <span className="order-count">{writeCount}문장</span>
-                  {isCurrent && <span className="order-badge">{isTimeUp ? '⏰' : '✍️'}</span>}
+                  {isCurrent && <span className="order-badge">{isTimeUp ? '시간 초과' : '쓰는 중'}</span>}
                 </div>
               );
             })}

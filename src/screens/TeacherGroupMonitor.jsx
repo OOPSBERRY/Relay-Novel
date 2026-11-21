@@ -68,14 +68,13 @@ function GroupCard({ groupIndex, roomCode, onReadAloud, onViewStory }) {
     <div className={`group-card ${isFinished ? 'group-card-finished' : ''}`}>
       <div className="group-card-header">
         <span className="group-card-num">{groupIndex}모둠</span>
-        {isFinished && <span className="group-card-done-badge">완료 ✅</span>}
+        {isFinished && <span className="group-card-done-badge">완료</span>}
       </div>
 
       <div className="group-card-players">
         {players.map((name, i) => (
           <span key={i} className={`group-player-chip ${!isFinished && i === currentIdx ? 'group-player-active' : ''}`}>
             {name}
-            {!isFinished && i === currentIdx && ' ✍️'}
           </span>
         ))}
       </div>
@@ -101,16 +100,21 @@ function GroupCard({ groupIndex, roomCode, onReadAloud, onViewStory }) {
       {isFinished ? (
         <div className="group-card-actions">
           <button className="btn btn-readaloud btn-sm" onClick={() => onReadAloud(roomCode, room.title)}>
-            📖 낭독 모드
+            낭독 모드
           </button>
           <button className="btn btn-print btn-sm" onClick={() => onViewStory(roomCode)}>
-            🖨️ 인쇄 / 저장
+            인쇄 / 저장
           </button>
         </div>
       ) : (
         <div className="group-current-row">
           <p className="group-current-writer">
-            {currentName ? `✍️ ${currentName} 쓰는 중` : '대기 중'}
+            {currentName ? `${currentName} 쓰는 중` : '대기 중'}
+            {timeLeft !== null && (
+              <span className={`turn-timer ${timeLeft <= 30 && timeLeft > 0 ? 'timer-warning' : ''} ${timeLeft === 0 ? 'timer-expired' : ''}`}>
+                {timeLeft === 0 ? '시간 초과' : `${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')}`}
+              </span>
+            )}
           </p>
           {currentName && (
             <button
@@ -120,7 +124,7 @@ function GroupCard({ groupIndex, roomCode, onReadAloud, onViewStory }) {
                 advanceTurn(roomCode, room.turn_started_at, { type: 'skip', force: true });
               }}
             >
-              ⏭ 차례 넘기기
+              차례 넘기기
             </button>
           )}
         </div>

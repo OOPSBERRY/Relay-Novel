@@ -2,6 +2,7 @@ import { QRCodeSVG } from 'qrcode.react';
 
 export default function ProjectorMode({ roomCode, roomTitle, players, onRemovePlayer, onClose }) {
   const appUrl = window.location.origin;
+  const joinUrl = `${appUrl}/?code=${roomCode}`;
 
   return (
     <div className="projector-overlay">
@@ -22,7 +23,7 @@ export default function ProjectorMode({ roomCode, roomTitle, players, onRemovePl
           <div className="projector-right">
             <div className="projector-qr-wrap">
               <QRCodeSVG
-                value={appUrl}
+                value={joinUrl}
                 size={200}
                 bgColor="#FFFFFF"
                 fgColor="#1C1C2E"

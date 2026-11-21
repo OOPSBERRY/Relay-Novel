@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../supabase';
+import { unlockAudio } from '../utils/turnAlert';
 
 const SESSION_KEY = 'relay_student_session';
 
@@ -22,6 +23,7 @@ export default function StudentJoin({ initialCode = '', notice = '', onJoined, o
   const [error, setError] = useState('');
 
   async function handleJoin() {
+    unlockAudio();
     setError('');
     if (code.length !== 4) { setError('방 코드 4자리를 입력해주세요.'); return; }
     if (!name.trim()) { setError('이름을 입력해주세요.'); return; }
@@ -108,7 +110,6 @@ export default function StudentJoin({ initialCode = '', notice = '', onJoined, o
       <button className="back-btn" onClick={onBack}>← 뒤로</button>
 
       <div className="join-hero">
-        <div className="home-icon">🚀</div>
         <h2>방에 참가하기</h2>
       </div>
 
@@ -122,7 +123,7 @@ export default function StudentJoin({ initialCode = '', notice = '', onJoined, o
           placeholder="1234"
           className="code-input"
           inputMode="numeric"
-          autoFocus
+          autoFocus={!initialCode}
         />
 
         <label>내 이름</label>
@@ -132,6 +133,7 @@ export default function StudentJoin({ initialCode = '', notice = '', onJoined, o
           onKeyDown={e => e.key === 'Enter' && handleJoin()}
           placeholder="김민준"
           maxLength={10}
+          autoFocus={!!initialCode}
         />
 
         {error && <p className="error">{error}</p>}

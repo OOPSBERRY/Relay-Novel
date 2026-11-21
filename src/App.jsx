@@ -35,6 +35,7 @@ export default function App() {
 
   // 새로고침 복구
   useEffect(() => {
+    const qrCode = new URLSearchParams(window.location.search).get('code');
     async function tryRecover() {
       // 교사 복구
       try {
@@ -85,9 +86,16 @@ export default function App() {
         }
       } catch { sessionStorage.removeItem(SESSION_KEY); }
 
+      // QR로 들어온 경우(?code=1234): 방 코드가 채워진 학생 입장 화면으로 바로
+      if (qrCode && /^\d{4}$/.test(qrCode)) {
+        setRoomCode(qrCode);
+        setScreen('student-join');
+      }
       setRecovering(false);
     }
     tryRecover();
+    // 주소창의 ?code=는 한 번 쓰고 지운다 (새로고침 시 다시 입장 화면으로 가지 않도록)
+    if (window.location.search) window.history.replaceState(null, '', window.location.pathname);
   }, []);
 
   function reset() {
@@ -149,7 +157,7 @@ export default function App() {
     home: (
       <Home
         onTeacher={() => setScreen('teacher-entry')}
-        onStudent={() => setScreen('student-join')}
+        onStudent={() => { setRoomCode(''); setScreen('student-join'); }}
         onLibrary={() => setScreen('class-setup')}
       />
     ),
@@ -183,10 +191,10 @@ export default function App() {
     ),
     'student-join': (
       <StudentJoin
-        initialCode={joinNotice ? roomCode : ''}
+        initialCode={roomCode}
         notice={joinNotice}
         onJoined={handleStudentJoined}
-        onBack={() => { setJoinNotice(''); setScreen('home'); }}
+        onBack={() => { setJoinNotice(''); setRoomCode(''); setScreen('home'); }}
       />
     ),
     'student-wait': (

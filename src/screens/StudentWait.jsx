@@ -74,14 +74,14 @@ export default function StudentWait({ roomCode, myId, myName, onStarted, onRemov
   return (
     <div className="screen screen-center">
       <div className="wait-content">
-        <div className="wait-icon">⏳</div>
-        {roomTitle && <p className="wait-story-title">📖 {roomTitle}</p>}
+        {roomTitle && <p className="wait-story-title">{roomTitle}</p>}
         <h2>선생님을 기다리고 있어요</h2>
         <p className="wait-name">{myName} 님, 잘 오셨어요!</p>
         <div className="wait-player-count">
           <span className="wait-player-dot" />
           현재 <strong>{playerCount}명</strong> 참가 중
         </div>
+        <div className="waiting-dots"><span /><span /><span /></div>
         <p className="muted">선생님이 시작 버튼을 누르면 소설이 시작됩니다.</p>
         <div className="room-code-small">방 코드: <strong>{roomCode}</strong></div>
       </div>

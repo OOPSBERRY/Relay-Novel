@@ -2,18 +2,15 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import ReadAloudMode from './ReadAloudMode';
 
-const COVER_GRADIENTS = [
-  ['#667EEA', '#764BA2'], ['#F093FB', '#F5576C'],
-  ['#4FACFE', '#00F2FE'], ['#43E97B', '#38F9D7'],
-  ['#FA709A', '#FEE140'], ['#A18CD1', '#FBC2EB'],
-  ['#FCCB90', '#D57EEB'], ['#96FBC4', '#F9F586'],
-  ['#FBC2EB', '#A6C1EE'], ['#FDDB92', '#D1FDFF'],
+// 천 장정 느낌의 단색 표지
+const COVER_COLORS = [
+  '#3E5A48', '#6E2F27', '#2F4058', '#7A5A2C', '#4C3F5E',
+  '#3D4B50', '#8A5A43', '#5A3A2B', '#55603A', '#2E4E52',
 ];
 
 function getCoverStyle(code) {
   const hash = code.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  const [a, b] = COVER_GRADIENTS[hash % COVER_GRADIENTS.length];
-  return { background: `linear-gradient(145deg, ${a}, ${b})` };
+  return { background: COVER_COLORS[hash % COVER_COLORS.length] };
 }
 
 export default function StoryReader({ roomCode, onBack }) {
@@ -71,15 +68,15 @@ export default function StoryReader({ roomCode, onBack }) {
         </div>
 
         <div className="reader-footer-bar no-print">
-          <button className="btn btn-readaloud" onClick={() => setReadAloud(true)}>📖 낭독 모드</button>
-          <button className="btn btn-print" onClick={handlePrint}>🖨️ 인쇄 / PDF</button>
+          <button className="btn btn-readaloud" onClick={() => setReadAloud(true)}>낭독 모드</button>
+          <button className="btn btn-print" onClick={handlePrint}>인쇄 / PDF</button>
         </div>
       </div>
 
       {/* 인쇄 영역 */}
       <div className="printable">
         <div className="print-cover">
-          <div className="cover-book-icon">📖</div>
+          <div className="cover-book-icon" />
           <h1 className="cover-title">{room.title}</h1>
           <div className="cover-divider">— — —</div>
           <p className="cover-subtitle">우리가 함께 만든 릴레이 서재</p>

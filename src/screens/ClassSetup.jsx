@@ -38,7 +38,6 @@ export default function ClassSetup({ onEnter, onBack }) {
       <button className="back-btn" onClick={onBack}>← 뒤로</button>
 
       <div className="join-hero">
-        <div className="home-icon">📚</div>
         <h2>반 서재 보기</h2>
         <p className="muted">선생님에게 반 코드를 받아 입력하세요</p>
       </div>

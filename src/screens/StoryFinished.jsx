@@ -3,15 +3,18 @@ import confetti from 'canvas-confetti';
 import { supabase } from '../supabase';
 import ReadAloudMode from './ReadAloudMode';
 
+// 종이 · 잉크 · 인주 색 꽃가루
+const CONFETTI = ['#A23A2A', '#23201B', '#9A6416', '#3E6A4C', '#DCD4C5'];
+
 export default function StoryFinished({ roomCode, isTeacher, onHome, backLabel = '처음으로' }) {
   const [room, setRoom] = useState(null);
   const [sentences, setSentences] = useState([]);
   const [readAloud, setReadAloud] = useState(false);
 
   useEffect(() => {
-    confetti({ particleCount: 80, spread: 70, origin: { x: 0.2, y: 0.6 }, colors: ['#8B4FE8', '#FFE033', '#F093FB', '#4FACFE', '#43E97B'] });
-    setTimeout(() => confetti({ particleCount: 80, spread: 70, origin: { x: 0.8, y: 0.6 }, colors: ['#8B4FE8', '#FFE033', '#F093FB', '#4FACFE', '#43E97B'] }), 300);
-    setTimeout(() => confetti({ particleCount: 60, spread: 100, origin: { x: 0.5, y: 0.4 }, colors: ['#8B4FE8', '#FFE033', '#F093FB'] }), 700);
+    confetti({ particleCount: 70, shapes: ['square'], spread: 70, origin: { x: 0.2, y: 0.6 }, colors: CONFETTI });
+    setTimeout(() => confetti({ particleCount: 70, shapes: ['square'], spread: 70, origin: { x: 0.8, y: 0.6 }, colors: CONFETTI }), 300);
+    setTimeout(() => confetti({ particleCount: 50, shapes: ['square'], spread: 100, origin: { x: 0.5, y: 0.4 }, colors: CONFETTI }), 700);
   }, []);
 
   useEffect(() => {
@@ -39,17 +42,17 @@ export default function StoryFinished({ roomCode, isTeacher, onHome, backLabel =
 
       <div className="screen finished-screen">
         <div className="finished-header no-print">
-          <div className="finished-confetti">🎉</div>
+          <div className="finished-confetti">完</div>
           <h2>소설 완성!</h2>
           <p className="muted">{sentences.length}개의 문장으로 완성된 우리들의 이야기</p>
           <div className="finished-actions">
             {isTeacher && (
               <button className="btn btn-readaloud" onClick={() => setReadAloud(true)}>
-                📖 낭독 모드
+                낭독 모드
               </button>
             )}
             <button className="btn btn-print" onClick={handlePrint}>
-              🖨️ PDF로 저장 / 인쇄
+              PDF로 저장 / 인쇄
             </button>
             <button className="btn btn-ghost" onClick={onHome}>
               {backLabel}
@@ -59,7 +62,7 @@ export default function StoryFinished({ roomCode, isTeacher, onHome, backLabel =
 
         <div className="printable">
           <div className="print-cover">
-            <div className="cover-book-icon">📖</div>
+            <div className="cover-book-icon" />
             <h1 className="cover-title">{room.title}</h1>
             <div className="cover-divider">— — —</div>
             <p className="cover-subtitle">우리가 함께 만든 릴레이 서재</p>

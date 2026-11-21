@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabase';
 import { containsProfanity } from '../utils/profanity';
 import { getTurnInfo, useTimeLeft, useAutoSkip, advanceTurn } from '../utils/turn';
+import { notifyMyTurn, unlockAudio } from '../utils/turnAlert';
 
 export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
   const [room, setRoom] = useState(null);
@@ -104,6 +105,31 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
   const turnInfo = room ? getTurnInfo(room, sentences) : null;
   useAutoSkip(roomCode, room, timeLeft, turnInfo ? (turnInfo.currentId === myId ? 3000 : 6000) : null);
 
+  // 내 차례가 되면 알림 (진동 + 소리), 내 차례인 동안 탭 제목도 바꿔 둔다
+  const myTurnNow = !!turnInfo && room?.status === 'playing' && turnInfo.currentId === myId;
+  const wasMyTurn = useRef(false);
+  useEffect(() => {
+    if (myTurnNow && !wasMyTurn.current) notifyMyTurn();
+    wasMyTurn.current = myTurnNow;
+  }, [myTurnNow]);
+  useEffect(() => {
+    if (!myTurnNow) return;
+    const original = document.title;
+    let on = true;
+    document.title = '✍️ 내 차례예요! · 릴레이 서재';
+    // 다른 탭을 보고 있어도 눈에 띄도록 제목을 깜빡인다
+    const id = setInterval(() => {
+      on = !on;
+      document.title = on ? '✍️ 내 차례예요! · 릴레이 서재' : original;
+    }, 1000);
+    return () => { clearInterval(id); document.title = original; };
+  }, [myTurnNow]);
+  // 화면을 한 번이라도 누르면 소리 알림을 쓸 수 있게 깨워 둔다
+  useEffect(() => {
+    window.addEventListener('pointerdown', unlockAudio, { once: true });
+    return () => window.removeEventListener('pointerdown', unlockAudio);
+  }, []);
+
   async function handleSubmit() {
     if (!text.trim() || submitting || !room) return;
     if (containsProfanity(text)) { setProfanityError(true); return; }
@@ -151,7 +177,6 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
             return (
               <span key={id} className={`my-group-chip ${isMe ? 'my-group-me' : ''} ${isCurrent ? 'my-group-current' : ''}`}>
                 {isMe ? '나' : name}
-                {isCurrent && ' ✍️'}
               </span>
             );
           })}
@@ -164,7 +189,7 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
         ) : (
           recentSentences.map((s, i) => (
             <div key={s.id} className={`story-sentence ${i === recentSentences.length - 1 ? 'story-sentence-latest' : ''}`}>
-              <p className="story-text">"{s.text}"</p>
+              <p className="story-text">{s.text}</p>
               <p className="story-author">— {s.player_name}</p>
             </div>
           ))
@@ -174,16 +199,16 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
       {isMyTurn ? (
         <div className={`my-turn-box ${isWarning ? 'turn-warning' : ''} ${isTimeUp ? 'turn-expired' : ''}`}>
           <div className="my-turn-top">
-            <div className="my-turn-badge">✍️ 내 차례예요!</div>
+            <div className="my-turn-badge">내 차례예요</div>
             {timeLeft !== null && (
               <div className={`turn-timer ${isWarning ? 'timer-warning' : ''} ${isTimeUp ? 'timer-expired' : ''}`}>
-                {isTimeUp ? '⏰ 시간 초과!' : `⏱ ${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')}`}
+                {isTimeUp ? '시간 초과' : `${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')}`}
               </div>
             )}
           </div>
 
           {isTimeUp ? (
-            <div className="time-up-msg">⏰ 시간이 초과되었어요. 자동으로 다음 사람에게 넘어갑니다...</div>
+            <div className="time-up-msg">시간이 다 되었어요. 곧 다음 사람에게 넘어갑니다.</div>
           ) : (
             <>
               <textarea value={text} onChange={handleTextChange} placeholder="이야기를 이어가 볼까요?" maxLength={120} rows={3} autoFocus />
@@ -203,7 +228,7 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
                   {spellResult.error ? (
                     <p className="spell-panel-msg">맞춤법 검사 중 오류가 발생했어요.</p>
                   ) : spellErrors.length === 0 ? (
-                    <p className="spell-panel-msg">✅ 맞춤법 이상 없어요!</p>
+                    <p className="spell-panel-msg">맞춤법 이상 없어요.</p>
                   ) : (
                     <>
                       <div className="spell-panel-header">
@@ -243,7 +268,7 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
           <p>님이 쓰고 있어요...</p>
           {timeLeft !== null && (
             <div className={`turn-timer ${isWarning ? 'timer-warning' : ''} ${isTimeUp ? 'timer-expired' : ''}`}>
-              {isTimeUp ? '⏰ 시간 초과!' : `⏱ ${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')}`}
+              {isTimeUp ? '시간 초과' : `${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')}`}
             </div>
           )}
           <div className="waiting-dots"><span /><span /><span /></div>
