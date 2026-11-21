@@ -22,13 +22,29 @@
   --radius: 18px;
   --radius-sm: 12px;
   --radius-pill: 100px;
-  --font: 'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif;
+  --font: 'Zen Serif', 'AppleMyungjo', 'Batang', serif;
+}
+
+/* 글꼴: ZEN SERIF (OA Entertainment, 무료 · 수정·재배포 금지 → 원본 파일 그대로 사용)
+   Regular 한 가지뿐이라 모든 글자를 400으로 쓴다 (굵게 쓰면 브라우저가 가짜 굵기를 만든다) */
+@font-face {
+  font-family: 'Zen Serif';
+  src: url('/fonts/ZEN-SERIF-TTF-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+h1, h2, h3, h4, h5, h6, strong, b, th, button, input, textarea, select {
+  font-family: var(--font);
+  font-weight: 400;
+}
+
 body {
   font-family: var(--font);
+  font-synthesis: none;
   background: var(--gray-bg);
   color: var(--text);
   min-height: 100vh;
@@ -73,7 +89,7 @@ body {
 }
 
 .readaloud-title {
-  font-family: 'Sunflower', var(--font);
+  font-family: var(--font);
   font-size: 1.2rem;
   color: rgba(255,255,255,0.7);
   letter-spacing: 0.05em;
@@ -113,7 +129,7 @@ body {
 
 .readaloud-progress {
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 400;
   color: var(--yellow);
   letter-spacing: 0.05em;
 }
@@ -154,7 +170,7 @@ body {
 
 .readaloud-sentence-new .readaloud-text {
   font-size: 1.8rem;
-  font-weight: 700;
+  font-weight: 400;
   color: #FFFFFF;
   line-height: 1.6;
   animation: fadeUp 0.5s ease both;
@@ -165,7 +181,7 @@ body {
 .readaloud-author {
   font-size: 1rem;
   color: var(--yellow);
-  font-weight: 600;
+  font-weight: 400;
   animation: fadeUp 0.5s ease 0.15s both;
 }
 
@@ -189,7 +205,7 @@ body {
   background: var(--yellow);
   color: var(--dark);
   font-size: 1.2rem;
-  font-weight: 800;
+  font-weight: 400;
   padding: 16px 60px;
   border-radius: var(--radius-pill);
   border: none;
@@ -208,7 +224,7 @@ body {
   background: var(--yellow);
   color: var(--dark);
   font-size: 1rem;
-  font-weight: 800;
+  font-weight: 400;
   padding: 12px 24px;
   border-radius: var(--radius-pill);
   border: none;
@@ -242,7 +258,7 @@ body {
 
 .modal-title {
   font-size: 1.4rem;
-  font-weight: 900;
+  font-weight: 400;
   color: var(--purple-dark);
   margin-bottom: 6px;
 }
@@ -261,7 +277,7 @@ body {
 }
 
 .next-story-banner p {
-  font-weight: 700;
+  font-weight: 400;
   color: var(--dark);
   font-size: 0.95rem;
 }
@@ -298,7 +314,7 @@ body {
   border: none;
   color: rgba(255,255,255,0.7);
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 400;
   font-family: var(--font);
   padding: 10px 20px;
   border-radius: var(--radius-pill);
@@ -316,9 +332,9 @@ body {
 }
 
 .projector-app-name {
-  font-family: 'Sunflower', var(--font);
+  font-family: var(--font);
   font-size: 1.4rem;
-  font-weight: 500;
+  font-weight: 400;
   color: rgba(255,255,255,0.5);
   letter-spacing: 0.1em;
 }
@@ -339,13 +355,13 @@ body {
 .projector-label {
   font-size: 1.2rem;
   color: rgba(255,255,255,0.6);
-  font-weight: 600;
+  font-weight: 400;
   letter-spacing: 0.08em;
 }
 
 .projector-code {
   font-size: 9rem;
-  font-weight: 900;
+  font-weight: 400;
   color: var(--yellow);
   letter-spacing: 0.2em;
   line-height: 1;
@@ -381,7 +397,7 @@ body {
 .projector-qr-hint {
   font-size: 0.95rem;
   color: rgba(255,255,255,0.6);
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .projector-qr-url {
@@ -400,7 +416,7 @@ body {
 .projector-students-label {
   font-size: 1rem;
   color: rgba(255,255,255,0.5);
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .projector-count {
@@ -419,7 +435,7 @@ body {
   background: rgba(255,255,255,0.1);
   color: rgba(255,255,255,0.85);
   font-size: 1.05rem;
-  font-weight: 600;
+  font-weight: 400;
   padding: 8px 20px;
   border-radius: var(--radius-pill);
 }
@@ -528,9 +544,9 @@ body {
 .qr-close:hover { color: var(--text); }
 
 .qr-title {
-  font-family: 'Sunflower', var(--font);
+  font-family: var(--font);
   font-size: 1.4rem;
-  font-weight: 500;
+  font-weight: 400;
   color: var(--purple-dark);
   letter-spacing: 0.04em;
 }
@@ -594,15 +610,15 @@ body {
 
 .home-logo-letter {
   font-size: 2.6rem;
-  font-weight: 900;
+  font-weight: 400;
   color: var(--yellow);
   line-height: 1;
 }
 
 .home-app-name {
-  font-family: 'Sunflower', var(--font);
+  font-family: var(--font);
   font-size: 3rem;
-  font-weight: 500;
+  font-weight: 400;
   color: var(--purple-dark);
   letter-spacing: 0.04em;
   margin-bottom: 12px;
@@ -664,7 +680,7 @@ body {
   border: none;
   border-radius: var(--radius-pill);
   font-size: 1.05rem;
-  font-weight: 700;
+  font-weight: 400;
   font-family: var(--font);
   cursor: pointer;
   transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
@@ -675,13 +691,13 @@ body {
 .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
 
 .home-btn-icon { font-size: 1.6rem; display: block; margin-bottom: 2px; }
-.home-btn-main { display: block; font-size: 1.3rem; font-family: 'Sunflower', var(--font); font-weight: 500; letter-spacing: 0.04em; }
-.home-btn-sub { display: block; font-size: 0.8rem; opacity: 0.72; font-weight: 500; margin-top: 2px; font-family: var(--font); }
+.home-btn-main { display: block; font-size: 1.3rem; font-family: var(--font); font-weight: 400; letter-spacing: 0.04em; }
+.home-btn-sub { display: block; font-size: 0.8rem; opacity: 0.72; font-weight: 400; margin-top: 2px; font-family: var(--font); }
 
 .btn-teacher {
   background: var(--purple);
   color: var(--white);
-  font-family: 'Sunflower', var(--font);
+  font-family: var(--font);
   padding: 16px 18px;
   box-shadow: 0 4px 16px rgba(139, 79, 232, 0.35);
 }
@@ -690,7 +706,7 @@ body {
 .btn-student {
   background: var(--yellow);
   color: var(--dark);
-  font-family: 'Sunflower', var(--font);
+  font-family: var(--font);
   padding: 16px 18px;
   box-shadow: 0 4px 16px rgba(255, 224, 51, 0.5);
 }
@@ -737,7 +753,7 @@ body {
   cursor: pointer;
   padding: 4px 0;
   font-family: var(--font);
-  font-weight: 600;
+  font-weight: 400;
 }
 .back-btn:hover { color: var(--purple); }
 
@@ -757,7 +773,7 @@ body {
   border-radius: var(--radius-pill);
   background: transparent;
   font-size: 0.92rem;
-  font-weight: 700;
+  font-weight: 400;
   font-family: var(--font);
   color: var(--muted);
   cursor: pointer;
@@ -775,7 +791,7 @@ body {
 
 label {
   font-size: 0.88rem;
-  font-weight: 700;
+  font-weight: 400;
   color: var(--text);
   margin-bottom: -6px;
 }
@@ -799,7 +815,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--purple); }
 
 .code-input {
   font-size: 2rem;
-  font-weight: 900;
+  font-weight: 400;
   text-align: center;
   letter-spacing: 0.35em;
   color: var(--purple);
@@ -810,7 +826,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--purple); }
 .error {
   color: var(--red);
   font-size: 0.88rem;
-  font-weight: 600;
+  font-weight: 400;
   padding: 10px 14px;
   background: #FEF2F2;
   border-radius: var(--radius-sm);
@@ -826,7 +842,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--purple); }
 
 .card-title {
   font-size: 0.95rem;
-  font-weight: 700;
+  font-weight: 400;
   color: var(--text);
   margin-bottom: 12px;
 }
@@ -842,7 +858,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--purple); }
   box-shadow: var(--shadow-lg);
 }
 
-.room-code-label { font-size: 0.9rem; font-weight: 700; color: rgba(255,255,255,0.85); margin-bottom: 12px; }
+.room-code-label { font-size: 0.9rem; font-weight: 400; color: rgba(255,255,255,0.85); margin-bottom: 12px; }
 
 .room-code-row {
   display: flex;
@@ -854,7 +870,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--purple); }
 
 .room-code-big {
   font-size: 4.5rem;
-  font-weight: 900;
+  font-weight: 400;
   color: var(--yellow);
   letter-spacing: 0.18em;
   line-height: 1;
@@ -865,7 +881,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--purple); }
   border: 1.5px solid rgba(255,255,255,0.3);
   color: var(--white);
   font-size: 0.85rem;
-  font-weight: 700;
+  font-weight: 400;
   font-family: var(--font);
   padding: 8px 16px;
   border-radius: var(--radius-pill);
@@ -893,7 +909,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--purple); }
   padding: 6px 14px;
   border-radius: var(--radius-pill);
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 400;
   color: var(--purple-dark);
 }
 
@@ -938,7 +954,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--purple); }
 
 .wait-story-title {
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 400;
   color: var(--purple-dark);
   background: var(--purple-xlight);
   padding: 6px 16px;
@@ -968,7 +984,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--purple); }
 
 .wait-name {
   font-size: 1.3rem;
-  font-weight: 800;
+  font-weight: 400;
   color: var(--purple);
 }
 
@@ -983,7 +999,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--purple); }
 
 /* ===== 참가 화면 ===== */
 .join-hero { text-align: center; padding: 16px 0; }
-.join-hero h2 { font-size: 1.6rem; font-weight: 900; margin-top: 8px; color: var(--purple); }
+.join-hero h2 { font-size: 1.6rem; font-weight: 400; margin-top: 8px; color: var(--purple); }
 .home-icon { font-size: 64px; display: block; }
 
 /* ===== 교사 모니터 ===== */
@@ -999,7 +1015,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--purple); }
   box-shadow: var(--shadow);
 }
 
-.monitor-title { font-size: 1.4rem; font-weight: 900; color: var(--text); }
+.monitor-title { font-size: 1.4rem; font-weight: 400; color: var(--text); }
 
 .monitor-actions { display: flex; gap: 8px; flex-shrink: 0; }
 
@@ -1029,7 +1045,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--purple); }
   transition: width 0.4s ease;
 }
 
-.progress-text { font-size: 0.88rem; color: var(--text); font-weight: 600; }
+.progress-text { font-size: 0.88rem; color: var(--text); font-weight: 400; }
 .current-writer { color: var(--purple); }
 
 /* ===== 문장 목록 (교사 모니터) ===== */
@@ -1056,9 +1072,9 @@ input:focus, select:focus, textarea:focus { border-color: var(--purple); }
   border: 2px solid var(--purple-light);
 }
 
-.sentence-num { font-weight: 800; color: var(--muted); min-width: 22px; font-size: 0.78rem; padding-top: 2px; }
+.sentence-num { font-weight: 400; color: var(--muted); min-width: 22px; font-size: 0.78rem; padding-top: 2px; }
 .sentence-body { flex: 1; line-height: 1.55; }
-.sentence-who { font-size: 0.76rem; color: var(--purple); white-space: nowrap; font-weight: 600; }
+.sentence-who { font-size: 0.76rem; color: var(--purple); white-space: nowrap; font-weight: 400; }
 
 /* ===== 순서 목록 ===== */
 .order-list {
@@ -1082,7 +1098,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--purple); }
 .order-current {
   background: var(--purple-light);
   border: 2px solid var(--purple);
-  font-weight: 700;
+  font-weight: 400;
 }
 
 .order-num { color: var(--muted); min-width: 20px; font-size: 0.78rem; }
@@ -1101,7 +1117,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--purple); }
   box-shadow: var(--shadow);
 }
 
-.write-title { font-size: 1.2rem; font-weight: 900; color: var(--text); }
+.write-title { font-size: 1.2rem; font-weight: 400; color: var(--text); }
 
 .my-group-row {
   display: flex;
@@ -1116,7 +1132,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--purple); }
   border-radius: var(--radius-pill);
   background: var(--gray-bg);
   color: var(--muted);
-  font-weight: 600;
+  font-weight: 400;
   border: 2px solid transparent;
 }
 
@@ -1171,7 +1187,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--purple); }
 }
 
 .story-text { font-size: 1rem; line-height: 1.65; color: var(--text); }
-.story-author { font-size: 0.8rem; color: var(--purple); margin-top: 4px; font-weight: 600; }
+.story-author { font-size: 0.8rem; color: var(--purple); margin-top: 4px; font-weight: 400; }
 
 /* ===== 내 차례 ===== */
 .my-turn-box {
@@ -1187,7 +1203,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--purple); }
 
 .my-turn-badge {
   font-size: 1rem;
-  font-weight: 800;
+  font-weight: 400;
   color: var(--purple);
   text-align: center;
   background: var(--purple-light);
@@ -1219,7 +1235,7 @@ textarea {
 
 .waiting-name-badge {
   font-size: 1.6rem;
-  font-weight: 900;
+  font-weight: 400;
   color: var(--purple);
 }
 
@@ -1260,7 +1276,7 @@ textarea {
 
 .turn-timer {
   font-size: 1rem;
-  font-weight: 800;
+  font-weight: 400;
   color: var(--purple);
   background: var(--purple-light);
   padding: 6px 14px;
@@ -1292,7 +1308,7 @@ textarea {
 .auto-skip-count {
   font-size: 0.85rem;
   color: var(--red);
-  font-weight: 700;
+  font-weight: 400;
   animation: blink 1s ease-in-out infinite;
 }
 
@@ -1300,13 +1316,13 @@ textarea {
   text-align: center;
   font-size: 1rem;
   color: var(--red);
-  font-weight: 700;
+  font-weight: 400;
   padding: 16px;
 }
 
 .monitor-timer {
   font-size: 0.9rem;
-  font-weight: 800;
+  font-weight: 400;
   padding: 4px 12px;
   border-radius: var(--radius-pill);
   color: var(--purple);
@@ -1346,7 +1362,7 @@ textarea {
   border-radius: var(--radius-pill);
   padding: 6px 16px;
   font-size: 0.84rem;
-  font-weight: 700;
+  font-weight: 400;
   font-family: var(--font);
   cursor: pointer;
   transition: all 0.15s;
@@ -1372,7 +1388,7 @@ textarea {
   border: 2px solid #FED7AA;
 }
 
-.spell-panel-msg { font-weight: 600; color: #166534; }
+.spell-panel-msg { font-weight: 400; color: #166534; }
 
 .spell-panel-header {
   display: flex;
@@ -1389,7 +1405,7 @@ textarea {
   border-radius: var(--radius-pill);
   padding: 4px 14px;
   font-size: 0.78rem;
-  font-weight: 700;
+  font-weight: 400;
   font-family: var(--font);
   cursor: pointer;
 }
@@ -1414,9 +1430,9 @@ textarea {
   flex: 1;
 }
 
-.spell-wrong { color: var(--red); font-weight: 700; text-decoration: line-through; font-size: 0.9rem; }
+.spell-wrong { color: var(--red); font-weight: 400; text-decoration: line-through; font-size: 0.9rem; }
 .spell-arrow { color: var(--muted); font-size: 0.8rem; }
-.spell-correct { color: var(--green-dark); font-weight: 700; font-size: 0.9rem; }
+.spell-correct { color: var(--green-dark); font-weight: 400; font-size: 0.9rem; }
 
 .spell-type-badge {
   font-size: 0.72rem;
@@ -1424,7 +1440,7 @@ textarea {
   border-radius: var(--radius-pill);
   background: var(--gray-bg);
   color: var(--muted);
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .btn-spell-fix {
@@ -1434,7 +1450,7 @@ textarea {
   border-radius: var(--radius-pill);
   padding: 4px 12px;
   font-size: 0.78rem;
-  font-weight: 700;
+  font-weight: 400;
   font-family: var(--font);
   cursor: pointer;
   white-space: nowrap;
@@ -1447,7 +1463,7 @@ textarea {
 
 .finished-header h2 {
   font-size: 2rem;
-  font-weight: 900;
+  font-weight: 400;
   color: var(--purple);
 }
 
@@ -1466,7 +1482,7 @@ textarea {
   box-shadow: var(--shadow);
 }
 
-.story-preview h3 { font-size: 1rem; font-weight: 700; margin-bottom: 16px; }
+.story-preview h3 { font-size: 1rem; font-weight: 400; margin-bottom: 16px; }
 
 .preview-text {
   display: flex;
@@ -1491,9 +1507,9 @@ textarea {
   left: 0;
   right: 0;
   text-align: center;
-  font-family: 'Sunflower', var(--font);
+  font-family: var(--font);
   font-size: 0.95rem;
-  font-weight: 500;
+  font-weight: 400;
   color: var(--purple);
   padding: 10px;
   background: rgba(247, 247, 251, 0.92);
@@ -1517,12 +1533,12 @@ textarea {
 .class-code-bar-label {
   font-size: 0.78rem;
   color: var(--purple);
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .class-code-bar-value {
   font-size: 1rem;
-  font-weight: 900;
+  font-weight: 400;
   color: var(--purple-dark);
   letter-spacing: 0.15em;
 }
@@ -1541,7 +1557,7 @@ textarea {
   border: 1.5px dashed var(--gray-border);
   color: var(--muted);
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: 400;
   font-family: var(--font);
   padding: 10px 16px;
   border-radius: var(--radius-sm);
@@ -1577,13 +1593,13 @@ textarea {
 
 .class-link-label {
   font-size: 0.92rem;
-  font-weight: 700;
+  font-weight: 400;
   color: var(--purple-dark);
 }
 
 .class-status-badge {
   font-size: 0.85rem;
-  font-weight: 700;
+  font-weight: 400;
   padding: 8px 14px;
   border-radius: var(--radius-pill);
 }
@@ -1608,7 +1624,7 @@ textarea {
 
 .library-title {
   font-size: 1.5rem;
-  font-weight: 900;
+  font-weight: 400;
   color: var(--text);
 }
 
@@ -1627,7 +1643,7 @@ textarea {
 
 .teacher-login-title {
   font-size: 0.9rem;
-  font-weight: 700;
+  font-weight: 400;
   color: var(--text);
 }
 
@@ -1642,7 +1658,7 @@ textarea {
   background: var(--purple-light);
   color: var(--purple-dark);
   font-size: 0.85rem;
-  font-weight: 700;
+  font-weight: 400;
   padding: 10px 16px;
   border-radius: var(--radius-sm);
   text-align: center;
@@ -1665,7 +1681,7 @@ textarea {
   color: white;
   border: none;
   font-size: 1.4rem;
-  font-weight: 700;
+  font-weight: 400;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1737,7 +1753,7 @@ textarea {
 
 .book-cover-title {
   font-size: 0.82rem;
-  font-weight: 800;
+  font-weight: 400;
   color: rgba(255,255,255,0.95);
   line-height: 1.3;
   text-shadow: 0 1px 4px rgba(0,0,0,0.3);
@@ -1748,7 +1764,7 @@ textarea {
 
 .book-title {
   font-size: 0.88rem;
-  font-weight: 700;
+  font-weight: 400;
   color: var(--text);
   white-space: nowrap;
   overflow: hidden;
@@ -1783,7 +1799,7 @@ textarea {
   border: none;
   color: white;
   font-size: 0.9rem;
-  font-weight: 700;
+  font-weight: 400;
   font-family: var(--font);
   padding: 8px 16px;
   border-radius: var(--radius-pill);
@@ -1795,7 +1811,7 @@ textarea {
 
 .reader-title {
   font-size: 1.8rem;
-  font-weight: 900;
+  font-weight: 400;
   text-shadow: 0 2px 8px rgba(0,0,0,0.2);
   margin-bottom: 8px;
   word-break: keep-all;
@@ -1813,7 +1829,7 @@ textarea {
   background: rgba(255,255,255,0.25);
   color: white;
   font-size: 0.78rem;
-  font-weight: 700;
+  font-weight: 400;
   padding: 4px 10px;
   border-radius: var(--radius-pill);
   backdrop-filter: blur(4px);
@@ -1848,9 +1864,9 @@ textarea {
   background: var(--white);
   color: var(--purple);
   border: 2px solid var(--purple-light);
-  font-family: 'Sunflower', var(--font);
+  font-family: var(--font);
   font-size: 1.31rem;
-  font-weight: 500;
+  font-weight: 400;
   letter-spacing: 0.05em;
   padding: 14px;
 }
@@ -1889,7 +1905,7 @@ textarea {
 
   .cover-title {
     font-size: 32pt;
-    font-weight: 900;
+    font-weight: 400;
     color: #000;
     margin-bottom: 20px;
     line-height: 1.3;
@@ -1926,7 +1942,7 @@ textarea {
 
   .print-story-title {
     font-size: 20pt;
-    font-weight: 800;
+    font-weight: 400;
     text-align: center;
     margin-bottom: 40px;
     padding-bottom: 16px;
@@ -1974,7 +1990,7 @@ textarea {
   border: none;
   border-radius: 10px;
   font-size: 0.95rem;
-  font-weight: 700;
+  font-weight: 400;
   font-family: var(--font);
   cursor: pointer;
   background: transparent;
@@ -2018,7 +2034,7 @@ textarea {
 
 .group-count-label {
   font-size: 0.9rem;
-  font-weight: 700;
+  font-weight: 400;
   color: var(--text);
   white-space: nowrap;
 }
@@ -2035,7 +2051,7 @@ textarea {
   border: 2px solid var(--gray-border);
   background: var(--white);
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 400;
   font-family: var(--font);
   color: var(--text);
   cursor: pointer;
@@ -2058,7 +2074,7 @@ textarea {
 .group-preview {
   font-size: 0.85rem;
   color: var(--purple);
-  font-weight: 700;
+  font-weight: 400;
   margin-bottom: 12px;
 }
 
@@ -2107,13 +2123,13 @@ textarea {
 
 .group-card-num {
   font-size: 1.1rem;
-  font-weight: 900;
+  font-weight: 400;
   color: var(--purple-dark);
 }
 
 .group-card-done-badge {
   font-size: 0.82rem;
-  font-weight: 700;
+  font-weight: 400;
   color: var(--green-dark);
   background: #DCFCE7;
   padding: 3px 10px;
@@ -2132,7 +2148,7 @@ textarea {
   border-radius: var(--radius-pill);
   background: var(--gray-bg);
   color: var(--text);
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .group-player-active {
@@ -2163,7 +2179,7 @@ textarea {
 
 .group-progress-text {
   font-size: 0.8rem;
-  font-weight: 700;
+  font-weight: 400;
   color: var(--muted);
   white-space: nowrap;
 }
@@ -2171,7 +2187,7 @@ textarea {
 .group-current-writer {
   font-size: 0.85rem;
   color: var(--purple);
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .group-sentences {
@@ -2196,7 +2212,7 @@ textarea {
 
 .group-sentence-author {
   color: var(--purple);
-  font-weight: 700;
+  font-weight: 400;
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -2221,7 +2237,7 @@ textarea {
   color: var(--text);
   border: 2px solid var(--gray-border);
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 400;
   padding: 14px 24px;
   border-radius: var(--radius-pill);
   cursor: pointer;
