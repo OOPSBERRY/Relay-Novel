@@ -1,16 +1,5 @@
 import { useState } from 'react';
-import { supabase } from '../supabase';
-
-async function generateUniqueRoomCode() {
-  for (let i = 0; i < 20; i++) {
-    const code = String(Math.floor(1000 + Math.random() * 9000));
-    const { data } = await supabase
-      .from('rooms').select('code').eq('code', code)
-      .in('status', ['waiting', 'playing']).single();
-    if (!data) return code;
-  }
-  throw new Error('빈 방 코드를 찾지 못했어요. 잠시 후 다시 시도해주세요.');
-}
+import { api, errorMessage } from '../api';
 
 export default function TeacherEntry({ onCreated, onBack }) {
   const [title, setTitle] = useState('');
@@ -27,52 +16,26 @@ export default function TeacherEntry({ onCreated, onBack }) {
   const [error, setError] = useState('');
 
   async function handleCreate() {
+    if (loading) return;
     setError('');
     if (!title.trim()) { setError('소설 제목을 입력해주세요.'); return; }
     if (password.length < 4) { setError('교사 비밀번호를 4자리 이상 입력해주세요.'); return; }
-
-    let classId = null;
-
-    if (classCode.length === 4) {
-      const { data: existing } = await supabase
-        .from('classes').select('id')
-        .eq('class_code', classCode)
-        .eq('teacher_password', password)
-        .single();
-
-      if (existing) {
-        classId = existing.id;
-      } else {
-        if (!className.trim()) { setError('처음 만드는 반 서재라면 반 이름을 입력해주세요.'); return; }
-        const { data: newClass, error: classErr } = await supabase
-          .from('classes')
-          .insert({ class_code: classCode, name: className.trim(), teacher_password: password })
-          .select('id').single();
-        if (classErr) { setError('반 서재 생성에 실패했어요. 다시 시도해주세요.'); return; }
-        classId = newClass.id;
-      }
-    }
+    if (classCode && classCode.length !== 4) { setError('반 코드는 숫자 4자리예요. 쓰지 않으려면 비워두세요.'); return; }
 
     setLoading(true);
     try {
-      const code = await generateUniqueRoomCode();
-      const { error: err } = await supabase.from('rooms').insert({
-        code,
+      const code = await api.createRoom({
         title: title.trim(),
         hint: hint.trim(),
-        max_sentences: Number(maxSentences),
-        teacher_password: password,
-        status: 'waiting',
-        player_order: [],
-        player_names: {},
-        turn_time_limit: turnTimeLimit > 0 ? turnTimeLimit : null,
-        class_code: classCode.length === 4 ? classCode : null,
-        class_id: classId,
+        maxSentences: Number(maxSentences),
+        timeLimit: turnTimeLimit > 0 ? turnTimeLimit : null,
+        password,
+        classCode: classCode.length === 4 ? classCode : null,
+        className: className.trim(),
       });
-      if (err) throw err;
       onCreated(code, password);
-    } catch {
-      setError('방을 만드는 데 실패했습니다. 다시 시도해주세요.');
+    } catch (err) {
+      setError(errorMessage(err, '방을 만드는 데 실패했어요. 다시 시도해주세요.'));
       setLoading(false);
     }
   }

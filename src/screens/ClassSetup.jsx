@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { supabase } from '../supabase';
+import { api } from '../api';
 
 export default function ClassSetup({ onEnter, onBack }) {
   const [classCode, setClassCode] = useState('');
@@ -14,19 +14,14 @@ export default function ClassSetup({ onEnter, onBack }) {
 
     setLoading(true);
     try {
-      const { data, error: err } = await supabase
-        .from('classes')
-        .select('id, name')
-        .eq('class_code', classCode)
-        .eq('teacher_password', password)
-        .single();
+      const data = await api.openClass(classCode, password);
 
-      if (err || !data) {
+      if (!data) {
         setError('반 서재를 찾을 수 없어요. 코드와 비밀번호를 다시 확인해주세요.');
         setLoading(false);
         return;
       }
-      onEnter(classCode, data.name, data.id);
+      onEnter(classCode, data.name, data.id, password);
     } catch {
       setError('오류가 발생했어요. 다시 시도해주세요.');
       setLoading(false);

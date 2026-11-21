@@ -1,20 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabase';
 import ProjectorMode from './ProjectorMode';
-import { serverNow } from '../utils/turn';
+import { api, errorMessage } from '../api';
 
-async function generateUniqueRoomCode() {
-  for (let i = 0; i < 20; i++) {
-    const code = String(Math.floor(1000 + Math.random() * 9000));
-    const { data } = await supabase
-      .from('rooms').select('code').eq('code', code)
-      .in('status', ['waiting', 'playing', 'group_monitoring']).single();
-    if (!data) return code;
-  }
-  throw new Error('빈 방 코드를 찾지 못했어요. 잠시 후 다시 시도해주세요.');
-}
-
-export default function TeacherWait({ roomCode, onStarted, onGroupStarted, onBack }) {
+export default function TeacherWait({ roomCode, teacherPassword, onStarted, onGroupStarted, onBack }) {
   const [players, setPlayers] = useState([]);
   const [roomData, setRoomData] = useState(null);
   const [starting, setStarting] = useState(false);
@@ -79,103 +68,33 @@ export default function TeacherWait({ roomCode, onStarted, onGroupStarted, onBac
     if (starting) return;
     if (!window.confirm(`'${player.name}' 학생을 내보낼까요?\n학생 화면은 입장 화면으로 돌아갑니다.`)) return;
     setPlayers(prev => prev.filter(p => p.id !== player.id));
-    const { error } = await supabase.from('players').delete().eq('id', player.id).eq('room_code', roomCode);
-    if (error) {
-      alert('내보내지 못했어요. 다시 시도해주세요.');
+    try {
+      await api.removePlayer(roomCode, teacherPassword, player.id);
+    } catch (err) {
+      alert(errorMessage(err, '내보내지 못했어요. 다시 시도해주세요.'));
       setPlayers(prev => prev.some(p => p.id === player.id) ? prev : [...prev, player]);
     }
   }
 
+  // 순서 섞기, 첫 문장 넣기, 시작 시각 기록은 서버 함수가 한 번에 처리한다
   async function handleStart() {
     if (players.length < 2 || starting) return;
     setStarting(true);
-
-    const shuffled = [...players].sort(() => Math.random() - 0.5);
-    const playerOrder = shuffled.map(p => p.id);
-    const playerNames = Object.fromEntries(shuffled.map(p => [p.id, p.name]));
-    const now = new Date(serverNow()).toISOString();
-    const hasFirst = !!(roomData.hint && roomData.hint.trim());
-
-    if (hasFirst) {
-      await supabase.from('sentences').insert({
-        room_code: roomCode,
-        text: roomData.hint.trim(),
-        player_name: '선생님',
-        order_index: 0,
-        skipped: false,
-      });
+    try {
+      await api.startSingle(roomCode, teacherPassword);
+    } catch (err) {
+      alert(errorMessage(err, '시작하지 못했어요. 다시 시도해주세요.'));
+      setStarting(false);
     }
-
-    await supabase.from('rooms').update({
-      status: 'playing',
-      player_order: playerOrder,
-      player_names: playerNames,
-      turn_started_at: now,
-      ...(hasFirst ? { max_sentences: roomData.max_sentences + 1 } : {}),
-    }).eq('code', roomCode);
   }
 
   async function handleGroupStart() {
-    if (players.length < groupCount * 2 || starting) return;
+    if (players.length < effectiveGroupCount * 2 || starting) return;
     setStarting(true);
-
     try {
-      const shuffled = [...players].sort(() => Math.random() - 0.5);
-      const groups = Array.from({ length: groupCount }, (_, i) =>
-        shuffled.filter((_, j) => j % groupCount === i)
-      );
-
-      const now = new Date(serverNow()).toISOString();
-      const hasFirst = !!(roomData.hint && roomData.hint.trim());
-
-      // 모둠 코드 미리 생성 (순서 보장 필요)
-      const childCodes = [];
-      for (let i = 0; i < groupCount; i++) {
-        childCodes.push(await generateUniqueRoomCode());
-      }
-
-      // 모둠 방 생성 + 플레이어 이동 병렬 처리
-      await Promise.all(childCodes.map(async (code, i) => {
-        const groupPlayers = groups[i];
-        const playerOrder = groupPlayers.map(p => p.id);
-        const playerNames = Object.fromEntries(groupPlayers.map(p => [p.id, p.name]));
-
-        await supabase.from('rooms').insert({
-          code,
-          title: roomData.title,
-          hint: roomData.hint,
-          max_sentences: hasFirst ? roomData.max_sentences + 1 : roomData.max_sentences,
-          teacher_password: roomData.teacher_password,
-          turn_time_limit: roomData.turn_time_limit,
-          class_code: roomData.class_code,
-          class_id: roomData.class_id,
-          status: 'playing',
-          player_order: playerOrder,
-          player_names: playerNames,
-          turn_started_at: now,
-        });
-
-        // 첫 문장 삽입 + 플레이어 이동 병렬
-        await Promise.all([
-          hasFirst ? supabase.from('sentences').insert({
-            room_code: code,
-            text: roomData.hint.trim(),
-            player_name: '선생님',
-            order_index: 0,
-            skipped: false,
-          }) : Promise.resolve(),
-          ...groupPlayers.map(p =>
-            supabase.from('players').update({ room_code: code }).eq('id', p.id)
-          ),
-        ]);
-      }));
-
-      await supabase.from('rooms').update({
-        status: 'group_monitoring',
-        player_order: childCodes,
-      }).eq('code', roomCode);
+      await api.startGroups(roomCode, teacherPassword, effectiveGroupCount);
     } catch (err) {
-      alert(err.message);
+      alert(errorMessage(err, '모둠을 만들지 못했어요. 다시 시도해주세요.'));
       setStarting(false);
     }
   }

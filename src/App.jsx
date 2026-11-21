@@ -13,6 +13,7 @@ import ClassSetup from './screens/ClassSetup';
 import ClassLibrary from './screens/ClassLibrary';
 import StoryReader from './screens/StoryReader';
 import { syncClock } from './utils/turn';
+import { api } from './api';
 
 const SESSION_KEY = 'relay_student_session';
 const TEACHER_KEY = 'relay_teacher_session';
@@ -23,6 +24,7 @@ export default function App() {
   const [myId, setMyId] = useState('');
   const [myName, setMyName] = useState('');
   const [isTeacher, setIsTeacher] = useState(false);
+  const [teacherPassword, setTeacherPassword] = useState('');
   const [classCode, setClassCode] = useState('');
   const [className, setClassName] = useState('');
   const [classId, setClassId] = useState('');
@@ -43,9 +45,11 @@ export default function App() {
         if (teacherSaved) {
           const { roomCode: rc, password } = JSON.parse(teacherSaved);
           const { data: room } = await supabase.from('rooms').select('*').eq('code', rc).single();
-          if (room && room.teacher_password === password && room.status !== 'finished') {
+          const passwordOk = room ? await api.verifyTeacher(rc, password).catch(() => false) : false;
+          if (room && passwordOk && room.status !== 'finished') {
             setRoomCode(rc);
             setIsTeacher(true);
+            setTeacherPassword(password);
             if (room.status === 'waiting') setScreen('teacher-wait');
             else if (room.status === 'playing') setScreen('teacher-monitor');
             else if (room.status === 'group_monitoring') {
@@ -103,7 +107,7 @@ export default function App() {
     localStorage.removeItem(TEACHER_KEY);
     setScreen('home');
     setRoomCode(''); setMyId(''); setMyName('');
-    setIsTeacher(false); setGroupRoomCodes([]);
+    setIsTeacher(false); setTeacherPassword(''); setGroupRoomCodes([]);
   }
 
   function saveTeacherSession(code, password) {
@@ -165,7 +169,7 @@ export default function App() {
       <TeacherEntry
         onCreated={(code, password) => {
           saveTeacherSession(code, password);
-          setRoomCode(code); setIsTeacher(true); setScreen('teacher-wait');
+          setRoomCode(code); setIsTeacher(true); setTeacherPassword(password); setScreen('teacher-wait');
         }}
         onBack={() => setScreen('home')}
       />
@@ -173,17 +177,19 @@ export default function App() {
     'teacher-wait': (
       <TeacherWait
         roomCode={roomCode}
+        teacherPassword={teacherPassword}
         onStarted={() => setScreen('teacher-monitor')}
         onGroupStarted={(codes) => { setGroupRoomCodes(codes); setScreen('teacher-group-monitor'); }}
         onBack={reset}
       />
     ),
     'teacher-monitor': (
-      <TeacherMonitor roomCode={roomCode} onFinished={() => setScreen('story-finished')} onBack={reset} />
+      <TeacherMonitor roomCode={roomCode} teacherPassword={teacherPassword} onFinished={() => setScreen('story-finished')} onBack={reset} />
     ),
     'teacher-group-monitor': (
       <TeacherGroupMonitor
         parentRoomCode={roomCode}
+        teacherPassword={teacherPassword}
         groupRoomCodes={groupRoomCodes}
         onViewStory={(code) => { setRoomCode(code); setScreen('story-finished'); }}
         onBack={reset}

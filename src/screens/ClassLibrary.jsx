@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
+import { api } from '../api';
 
 // 천 장정 느낌의 단색 표지
 const COVER_COLORS = [
@@ -25,6 +26,7 @@ export default function ClassLibrary({ classCode, className, classId, onRead, on
   const [showPasswordInput, setShowPasswordInput] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [teacherPassword, setTeacherPassword] = useState('');
 
   useEffect(() => {
     load();
@@ -43,12 +45,12 @@ export default function ClassLibrary({ classCode, className, classId, onRead, on
 
   async function handleTeacherLogin() {
     setPasswordError('');
-    const { data } = await supabase
-      .from('classes').select('teacher_password').eq('id', classId).single();
-    if (!data || data.teacher_password !== passwordInput) {
+    const ok = await api.verifyClass(classId, passwordInput).catch(() => false);
+    if (!ok) {
       setPasswordError('비밀번호가 틀렸어요.');
       return;
     }
+    setTeacherPassword(passwordInput);
     setIsTeacher(true);
     setShowPasswordInput(false);
     setPasswordInput('');
@@ -56,8 +58,12 @@ export default function ClassLibrary({ classCode, className, classId, onRead, on
 
   async function handleDelete(storyCode, title) {
     if (!window.confirm(`"${title}"을 서재에서 삭제할까요?`)) return;
-    await supabase.from('rooms').update({ class_code: null }).eq('code', storyCode);
-    setStories(prev => prev.filter(s => s.code !== storyCode));
+    try {
+      await api.removeFromLibrary(classId, teacherPassword, storyCode);
+      setStories(prev => prev.filter(s => s.code !== storyCode));
+    } catch {
+      alert('서재에서 빼지 못했어요. 다시 시도해주세요.');
+    }
   }
 
   return (
@@ -70,7 +76,7 @@ export default function ClassLibrary({ classCode, className, classId, onRead, on
         </div>
         <div className="library-teacher-btn-wrap">
           {isTeacher ? (
-            <button className="btn btn-ghost btn-sm" onClick={() => setIsTeacher(false)}>
+            <button className="btn btn-ghost btn-sm" onClick={() => { setIsTeacher(false); setTeacherPassword(''); }}>
               관리 종료
             </button>
           ) : (

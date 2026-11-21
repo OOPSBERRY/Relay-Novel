@@ -2,8 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabase';
 import ReadAloudMode from './ReadAloudMode';
 import { getTurnInfo, useTimeLeft, useAutoSkip, advanceTurn } from '../utils/turn';
+import { api } from '../api';
 
-function GroupCard({ groupIndex, roomCode, onReadAloud, onViewStory }) {
+function GroupCard({ groupIndex, roomCode, teacherPassword, onReadAloud, onViewStory }) {
   const [room, setRoom] = useState(null);
   const [sentences, setSentences] = useState([]);
 
@@ -121,7 +122,7 @@ function GroupCard({ groupIndex, roomCode, onReadAloud, onViewStory }) {
               className="btn btn-ghost btn-sm"
               onClick={() => {
                 if (!window.confirm(`${groupIndex}모둠 ${currentName} 학생의 차례를 패스하고 다음 사람으로 넘길까요?`)) return;
-                advanceTurn(roomCode, room.turn_started_at, { type: 'skip', force: true });
+                advanceTurn(roomCode, room.turn_started_at, { type: 'skip', force: true, password: teacherPassword });
               }}
             >
               차례 넘기기
@@ -133,7 +134,7 @@ function GroupCard({ groupIndex, roomCode, onReadAloud, onViewStory }) {
   );
 }
 
-export default function TeacherGroupMonitor({ parentRoomCode, groupRoomCodes, onViewStory, onBack }) {
+export default function TeacherGroupMonitor({ parentRoomCode, teacherPassword, groupRoomCodes, onViewStory, onBack }) {
   const [endingAll, setEndingAll] = useState(false);
   const [readAloud, setReadAloud] = useState(null); // { title, sentences }
 
@@ -146,8 +147,10 @@ export default function TeacherGroupMonitor({ parentRoomCode, groupRoomCodes, on
   async function handleEndAll() {
     if (!window.confirm('모든 모둠의 소설을 지금 끝낼까요?')) return;
     setEndingAll(true);
-    for (const code of groupRoomCodes) {
-      await supabase.from('rooms').update({ status: 'finished' }).eq('code', code).neq('status', 'finished');
+    try {
+      await Promise.all(groupRoomCodes.map(code => api.endRoom(code, teacherPassword)));
+    } catch {
+      alert('일부 모둠을 끝내지 못했어요. 다시 시도해주세요.');
     }
     setEndingAll(false);
   }
@@ -182,6 +185,7 @@ export default function TeacherGroupMonitor({ parentRoomCode, groupRoomCodes, on
               key={code}
               groupIndex={i + 1}
               roomCode={code}
+              teacherPassword={teacherPassword}
               onReadAloud={handleReadAloud}
               onViewStory={onViewStory}
             />

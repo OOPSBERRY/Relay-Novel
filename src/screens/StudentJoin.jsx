@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { supabase } from '../supabase';
 import { unlockAudio } from '../utils/turnAlert';
+import { api, errorMessage } from '../api';
 
 const SESSION_KEY = 'relay_student_session';
 
-const normalizeName = (n) => (n || '').replace(/\s+/g, '');
 
 async function findPlayerInGroups(groupCodes, name) {
   for (const childCode of groupCodes) {
@@ -68,39 +68,13 @@ export default function StudentJoin({ initialCode = '', notice = '', onJoined, o
         return;
       }
 
-      // 대기 중인 방: 같은 이름(띄어쓰기 무시)이 이미 있으면 막는다
-      const DUP_MSG = '이미 같은 이름으로 들어온 친구가 있어요. 이름 뒤에 번호나 글자를 붙여 주세요. (내가 아까 들어왔다가 나간 거라면 선생님께 말해 주세요.)';
-      const sameName = (n) => normalizeName(n) === normalizeName(name);
-      const { data: roomPlayers } = await supabase
-        .from('players').select('id, name').eq('room_code', code);
-      if ((roomPlayers || []).some(p => sameName(p.name))) {
-        setError(DUP_MSG);
-        setLoading(false);
-        return;
-      }
-
-      const playerId = crypto.randomUUID();
-      const { error: insertErr } = await supabase.from('players').insert({
-        id: playerId, room_code: code, name: name.trim(),
-      });
-      if (insertErr) throw insertErr;
-
-      // 거의 동시에 같은 이름으로 들어온 경우: 먼저 들어온 한 명만 남긴다
-      const { data: after } = await supabase
-        .from('players').select('id, name, joined_at').eq('room_code', code)
-        .order('joined_at').order('id');
-      const first = (after || []).find(p => sameName(p.name));
-      if (first && first.id !== playerId) {
-        await supabase.from('players').delete().eq('id', playerId);
-        setError(DUP_MSG);
-        setLoading(false);
-        return;
-      }
+      // 대기 중인 방: 서버가 같은 이름(띄어쓰기 무시)인지 확인하고 자리를 만든다
+      const playerId = await api.joinRoom(code, name.trim());
 
       sessionStorage.setItem(SESSION_KEY, JSON.stringify({ roomCode: code, myId: playerId, myName: name.trim() }));
       onJoined(code, playerId, name.trim());
-    } catch {
-      setError('오류가 발생했어요. 다시 시도해주세요.');
+    } catch (err) {
+      setError(errorMessage(err));
       setLoading(false);
     }
   }

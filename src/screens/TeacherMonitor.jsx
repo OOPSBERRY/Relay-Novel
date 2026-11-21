@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabase';
 import { getTurnInfo, useTimeLeft, advanceTurn } from '../utils/turn';
+import { api, errorMessage } from '../api';
 
-export default function TeacherMonitor({ roomCode, onFinished, onBack }) {
+export default function TeacherMonitor({ roomCode, teacherPassword, onFinished, onBack }) {
   const [room, setRoom] = useState(null);
   const [sentences, setSentences] = useState([]);
   const [ending, setEnding] = useState(false);
@@ -75,14 +76,20 @@ export default function TeacherMonitor({ roomCode, onFinished, onBack }) {
   async function handleForceEnd() {
     if (!window.confirm('소설을 지금 끝낼까요?')) return;
     setEnding(true);
-    await supabase.from('rooms').update({ status: 'finished' }).eq('code', roomCode);
+    try {
+      await api.endRoom(roomCode, teacherPassword);
+    } catch (err) {
+      alert(errorMessage(err, '이야기를 끝내지 못했어요. 다시 시도해주세요.'));
+      setEnding(false);
+    }
   }
 
   async function handleSkip({ force = false } = {}) {
     if (!room || skipping.current) return;
     skipping.current = true;
     setAutoSkipCount(null);
-    await advanceTurn(roomCode, room.turn_started_at, { type: 'skip', force });
+    const result = await advanceTurn(roomCode, room.turn_started_at, { type: 'skip', force, password: teacherPassword });
+    if (result.reason === 'forbidden') alert('교사 비밀번호가 맞지 않아요. 처음 화면에서 다시 들어와 주세요.');
     skipping.current = false;
   }
 

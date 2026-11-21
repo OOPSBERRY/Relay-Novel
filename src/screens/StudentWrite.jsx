@@ -11,6 +11,7 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
   const [submitting, setSubmitting] = useState(false);
   const [profanityError, setProfanityError] = useState(false);
   const [turnMissed, setTurnMissed] = useState(false);
+  const [submitError, setSubmitError] = useState(false);
 
   const onFinishedRef = useRef(onFinished);
   useEffect(() => { onFinishedRef.current = onFinished; }, [onFinished]);
@@ -62,6 +63,7 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
     setText(e.target.value);
     setProfanityError(false);
     setTurnMissed(false);
+    setSubmitError(false);
   }
 
   // 시간 초과 → 자동 패스. 내 차례면 3초 뒤, 다른 학생 화면은 혹시 몰라 6초 뒤 대신 넘겨준다.
@@ -105,8 +107,10 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
       });
       if (result.ok) {
         setText('');
-      } else if (result.reason === 'turn-changed') {
+      } else if (result.reason === 'turn-changed' || result.reason === 'not-playing') {
         setTurnMissed(true);
+      } else {
+        setSubmitError(true);
       }
     } finally {
       setSubmitting(false);
@@ -176,6 +180,7 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
               <textarea value={text} onChange={handleTextChange} placeholder="이야기를 이어가 볼까요?" maxLength={120} rows={3} autoFocus />
               <span className="char-count">{text.length} / 120자</span>
 
+              {submitError && <p className="error">제출하지 못했어요. 다시 눌러 주세요.</p>}
               {turnMissed && <p className="error">시간이 지나 차례가 넘어갔어요. 쓴 글은 그대로 남아 있어요.</p>}
               {profanityError && <p className="error">부적절한 표현이 포함되어 있어요. 다시 작성해주세요.</p>}
 
