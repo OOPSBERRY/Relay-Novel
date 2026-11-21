@@ -1,12 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <circle cx="50" cy="50" r="50" fill="#8B4FE8"/>
-  <text
-    x="50"
-    y="70"
-    font-family="'Malgun Gothic', '맑은 고딕', sans-serif"
-    font-size="58"
-    font-weight="900"
-    text-anchor="middle"
-    fill="#FFE033"
-  >ㄹ</text>
+  <!-- 도장(낙관): 인주 빨강 사각형 + 종이색 ㄹ (글꼴 없이 선으로 그려 어느 기기에서나 같게) -->
+  <rect width="100" height="100" rx="6" fill="#A23A2A"/>
+  <path d="M28 27 H70 V48 H30 V71 H73" fill="none" stroke="#F5F1E8" stroke-width="9" stroke-linecap="square" stroke-linejoin="miter"/>
 </svg>
