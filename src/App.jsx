@@ -12,6 +12,7 @@ import StoryFinished from './screens/StoryFinished';
 import ClassSetup from './screens/ClassSetup';
 import ClassLibrary from './screens/ClassLibrary';
 import StoryReader from './screens/StoryReader';
+import { syncClock } from './utils/turn';
 
 const SESSION_KEY = 'relay_student_session';
 const TEACHER_KEY = 'relay_teacher_session';
@@ -28,6 +29,9 @@ export default function App() {
   const [readingCode, setReadingCode] = useState('');
   const [groupRoomCodes, setGroupRoomCodes] = useState([]);
   const [recovering, setRecovering] = useState(true);
+  const [joinNotice, setJoinNotice] = useState('');
+
+  useEffect(() => { syncClock(); }, []);
 
   // 새로고침 복구
   useEffect(() => {
@@ -67,6 +71,16 @@ export default function App() {
             setRecovering(false);
             return;
           }
+          // 대기실(또는 모둠 배정 직후)에서 새로고침한 경우: 내 자리가 남아 있으면 그대로 복귀
+          if (data?.status === 'waiting' || data?.status === 'group_monitoring') {
+            const { data: me } = await supabase.from('players').select('id').eq('id', id).maybeSingle();
+            if (me) {
+              setRoomCode(rc); setMyId(id); setMyName(name);
+              setScreen('student-wait');
+              setRecovering(false);
+              return;
+            }
+          }
           sessionStorage.removeItem(SESSION_KEY);
         }
       } catch { sessionStorage.removeItem(SESSION_KEY); }
@@ -91,7 +105,15 @@ export default function App() {
   function handleStudentJoined(code, id, name) {
     sessionStorage.setItem(SESSION_KEY, JSON.stringify({ roomCode: code, myId: id, myName: name }));
     setRoomCode(code); setMyId(id); setMyName(name);
+    setJoinNotice('');
     setScreen('student-wait');
+  }
+
+  function handleStudentRemoved() {
+    sessionStorage.removeItem(SESSION_KEY);
+    setMyId(''); setMyName('');
+    setJoinNotice('선생님이 대기실에서 이름을 지웠어요. 이름을 확인하고 다시 입장해주세요.');
+    setScreen('student-join');
   }
 
   function handleStudentStarted(newRoomCode) {
@@ -160,10 +182,19 @@ export default function App() {
       />
     ),
     'student-join': (
-      <StudentJoin onJoined={handleStudentJoined} onBack={() => setScreen('home')} />
+      <StudentJoin
+        initialCode={joinNotice ? roomCode : ''}
+        notice={joinNotice}
+        onJoined={handleStudentJoined}
+        onBack={() => { setJoinNotice(''); setScreen('home'); }}
+      />
     ),
     'student-wait': (
-      <StudentWait roomCode={roomCode} myId={myId} myName={myName} onStarted={handleStudentStarted} />
+      <StudentWait
+        roomCode={roomCode} myId={myId} myName={myName}
+        onStarted={handleStudentStarted}
+        onRemoved={handleStudentRemoved}
+      />
     ),
     'student-write': (
       <StudentWrite roomCode={roomCode} myId={myId} myName={myName} onFinished={handleStudentFinished} />

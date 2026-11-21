@@ -1,6 +1,6 @@
 import { QRCodeSVG } from 'qrcode.react';
 
-export default function ProjectorMode({ roomCode, roomTitle, players, onClose }) {
+export default function ProjectorMode({ roomCode, roomTitle, players, onRemovePlayer, onClose }) {
   const appUrl = window.location.origin;
 
   return (
@@ -43,7 +43,19 @@ export default function ProjectorMode({ roomCode, roomTitle, players, onClose })
               <span className="projector-waiting">학생들을 기다리는 중...</span>
             ) : (
               players.map(p => (
-                <span key={p.id} className="projector-student-chip">{p.name}</span>
+                <span key={p.id} className="projector-student-chip">
+                  {p.name}
+                  {onRemovePlayer && (
+                    <button
+                      className="projector-student-remove"
+                      onClick={() => onRemovePlayer(p)}
+                      aria-label={`${p.name} 내보내기`}
+                      title="내보내기"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </span>
               ))
             )}
           </div>

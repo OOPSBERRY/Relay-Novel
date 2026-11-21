@@ -3,6 +3,8 @@ import { supabase } from '../supabase';
 
 const SESSION_KEY = 'relay_student_session';
 
+const normalizeName = (n) => (n || '').replace(/\s+/g, '');
+
 async function findPlayerInGroups(groupCodes, name) {
   for (const childCode of groupCodes) {
     const { data: child } = await supabase
@@ -13,8 +15,8 @@ async function findPlayerInGroups(groupCodes, name) {
   return null;
 }
 
-export default function StudentJoin({ onJoined, onBack }) {
-  const [code, setCode] = useState('');
+export default function StudentJoin({ initialCode = '', notice = '', onJoined, onBack }) {
+  const [code, setCode] = useState(initialCode);
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -64,17 +66,33 @@ export default function StudentJoin({ onJoined, onBack }) {
         return;
       }
 
-      // 대기 중인 방: 같은 이름이 이미 있으면 재사용, 없으면 새로 생성
-      const { data: existing } = await supabase
-        .from('players').select('id').eq('room_code', code).eq('name', name.trim()).single();
+      // 대기 중인 방: 같은 이름(띄어쓰기 무시)이 이미 있으면 막는다
+      const DUP_MSG = '이미 같은 이름으로 들어온 친구가 있어요. 이름 뒤에 번호나 글자를 붙여 주세요. (내가 아까 들어왔다가 나간 거라면 선생님께 말해 주세요.)';
+      const sameName = (n) => normalizeName(n) === normalizeName(name);
+      const { data: roomPlayers } = await supabase
+        .from('players').select('id, name').eq('room_code', code);
+      if ((roomPlayers || []).some(p => sameName(p.name))) {
+        setError(DUP_MSG);
+        setLoading(false);
+        return;
+      }
 
-      const playerId = existing ? existing.id : crypto.randomUUID();
+      const playerId = crypto.randomUUID();
+      const { error: insertErr } = await supabase.from('players').insert({
+        id: playerId, room_code: code, name: name.trim(),
+      });
+      if (insertErr) throw insertErr;
 
-      if (!existing) {
-        const { error: insertErr } = await supabase.from('players').insert({
-          id: playerId, room_code: code, name: name.trim(),
-        });
-        if (insertErr) throw insertErr;
+      // 거의 동시에 같은 이름으로 들어온 경우: 먼저 들어온 한 명만 남긴다
+      const { data: after } = await supabase
+        .from('players').select('id, name, joined_at').eq('room_code', code)
+        .order('joined_at').order('id');
+      const first = (after || []).find(p => sameName(p.name));
+      if (first && first.id !== playerId) {
+        await supabase.from('players').delete().eq('id', playerId);
+        setError(DUP_MSG);
+        setLoading(false);
+        return;
       }
 
       sessionStorage.setItem(SESSION_KEY, JSON.stringify({ roomCode: code, myId: playerId, myName: name.trim() }));
@@ -95,6 +113,7 @@ export default function StudentJoin({ onJoined, onBack }) {
       </div>
 
       <div className="form">
+        {notice && <p className="error">{notice}</p>}
         <label>방 코드 (4자리 숫자)</label>
         <input
           value={code}

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabase';
 import { containsProfanity } from '../utils/profanity';
+import { getTurnInfo, useTimeLeft, useAutoSkip, advanceTurn } from '../utils/turn';
 
 export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
   const [room, setRoom] = useState(null);
@@ -8,13 +9,12 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
   const [text, setText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [profanityError, setProfanityError] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(null);
+  const [turnMissed, setTurnMissed] = useState(false);
   const [spellResult, setSpellResult] = useState(null);
   const [spellChecking, setSpellChecking] = useState(false);
 
   const onFinishedRef = useRef(onFinished);
   useEffect(() => { onFinishedRef.current = onFinished; }, [onFinished]);
-  const timerInterval = useRef(null);
 
   useEffect(() => {
     let active = true;
@@ -45,7 +45,7 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
       .on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'sentences', filter: `room_code=eq.${roomCode}` },
         ({ new: s }) => {
-          if (active) setSentences(prev => [...prev, s].sort((a, b) => a.order_index - b.order_index));
+          if (active) setSentences(prev => prev.some(p => p.id === s.id) ? prev : [...prev, s].sort((a, b) => a.order_index - b.order_index));
         }
       )
       .subscribe();
@@ -57,23 +57,12 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
     };
   }, [roomCode]);
 
-  // 타이머
-  useEffect(() => {
-    clearInterval(timerInterval.current);
-    if (!room?.turn_time_limit || !room?.turn_started_at) { setTimeLeft(null); return; }
-
-    function tick() {
-      const elapsed = (Date.now() - new Date(room.turn_started_at).getTime()) / 1000;
-      setTimeLeft(Math.max(0, Math.ceil(room.turn_time_limit - elapsed)));
-    }
-    tick();
-    timerInterval.current = setInterval(tick, 500);
-    return () => clearInterval(timerInterval.current);
-  }, [room?.turn_started_at, room?.turn_time_limit]);
+  const timeLeft = useTimeLeft(room);
 
   function handleTextChange(e) {
     setText(e.target.value);
     setProfanityError(false);
+    setTurnMissed(false);
     setSpellResult(null);
   }
 
@@ -110,73 +99,26 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
     setSpellResult(null);
   }
 
-  // 내 차례에 시간 초과 → 3초 후 자동 패스 (DB 재조회로 stale 방지)
-  useEffect(() => {
-    if (!room || timeLeft === null || timeLeft > 0) return;
-    const allSents = sentences.filter(s => !s.skipped);
-    const hasFirst = !!(room.hint?.trim());
-    const hintOffset = hasFirst ? 1 : 0;
-    const playerCount = room.player_order?.length || 1;
-    const currentIdx = (allSents.length - hintOffset) % playerCount;
-    if (room.player_order?.[Math.max(0, currentIdx)] !== myId) return;
-
-    const timer = setTimeout(async () => {
-      // DB에서 최신 상태 재조회
-      const { data: freshRoom } = await supabase
-        .from('rooms').select('*').eq('code', roomCode).single();
-      if (!freshRoom || freshRoom.status !== 'playing') return;
-
-      const { data: freshSents } = await supabase
-        .from('sentences').select('id, order_index').eq('room_code', roomCode).neq('skipped', true);
-      const freshCount = freshSents?.length || 0;
-
-      // 아직 내 차례인지 재확인
-      const hasFirstF = !!(freshRoom.hint?.trim());
-      const hintOffsetF = hasFirstF ? 1 : 0;
-      const playerCountF = freshRoom.player_order?.length || 1;
-      const currentIdxF = (freshCount - hintOffsetF) % playerCountF;
-      if (freshRoom.player_order?.[Math.max(0, currentIdxF)] !== myId) return;
-
-      // 타이머가 아직 만료 상태인지 확인
-      const elapsed = (Date.now() - new Date(freshRoom.turn_started_at).getTime()) / 1000;
-      if (elapsed < freshRoom.turn_time_limit) return;
-
-      const orderIndex = freshSents?.length || 0;
-      const isLast = orderIndex + 1 >= freshRoom.max_sentences;
-      await supabase.from('sentences').insert({
-        room_code: roomCode, text: '(패스)', player_name: myName,
-        order_index: orderIndex, skipped: true,
-      });
-      await supabase.from('rooms').update({
-        turn_started_at: new Date().toISOString(),
-        ...(isLast ? { status: 'finished' } : {}),
-      }).eq('code', roomCode);
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, [timeLeft, room?.turn_started_at]);
+  // 시간 초과 → 자동 패스. 내 차례면 3초 뒤, 다른 학생 화면은 혹시 몰라 6초 뒤 대신 넘겨준다.
+  // (여러 화면이 동시에 시도해도 advanceTurn이 한 번만 넘김)
+  const turnInfo = room ? getTurnInfo(room, sentences) : null;
+  useAutoSkip(roomCode, room, timeLeft, turnInfo ? (turnInfo.currentId === myId ? 3000 : 6000) : null);
 
   async function handleSubmit() {
     if (!text.trim() || submitting || !room) return;
     if (containsProfanity(text)) { setProfanityError(true); return; }
     setSubmitting(true);
-
-    const orderIndex = sentences.length;
-    const isLast = orderIndex + 1 >= room.max_sentences;
-
+    setTurnMissed(false);
     try {
-      await supabase.from('sentences').insert({
-        room_code: roomCode,
-        text: text.trim(),
-        player_name: myName,
-        order_index: orderIndex,
-        skipped: false,
+      const result = await advanceTurn(roomCode, room.turn_started_at, {
+        type: 'submit', playerId: myId, playerName: myName, text: text.trim(),
       });
-      await supabase.from('rooms').update({
-        turn_started_at: new Date().toISOString(),
-        ...(isLast ? { status: 'finished' } : {}),
-      }).eq('code', roomCode);
-      setText('');
-      setSpellResult(null);
+      if (result.ok) {
+        setText('');
+        setSpellResult(null);
+      } else if (result.reason === 'turn-changed') {
+        setTurnMissed(true);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -184,17 +126,9 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
 
   if (!room) return <div className="screen screen-center"><p className="muted">불러오는 중...</p></div>;
 
-  const hasFirstSentence = !!(room.hint && room.hint.trim());
-  const hintOffset = hasFirstSentence ? 1 : 0;
-  const playerCount = room.player_order.length || 1;
-  const allSentences = sentences.filter(s => !s.skipped);
-  const currentIdx = (allSentences.length - hintOffset) % playerCount;
-  const currentPlayerId = room.player_order[Math.max(0, currentIdx)];
+  const { playerCount, currentIdx, currentId: currentPlayerId, currentName: currentPlayerName, progress, total } = turnInfo;
   const isMyTurn = currentPlayerId === myId;
-  const currentPlayerName = room.player_names[currentPlayerId] || '';
-  const recentSentences = allSentences.slice(-3);
-  const progress = allSentences.length - hintOffset;
-  const total = room.max_sentences - hintOffset;
+  const recentSentences = sentences.filter(s => !s.skipped).slice(-3);
   const isTimeUp = timeLeft !== null && timeLeft <= 0;
   const isWarning = timeLeft !== null && timeLeft <= 30 && timeLeft > 0;
   const spellErrors = spellResult?.result ?? [];
@@ -294,6 +228,7 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
                 </div>
               )}
 
+              {turnMissed && <p className="error">시간이 지나 차례가 넘어갔어요. 쓴 글은 그대로 남아 있어요.</p>}
               {profanityError && <p className="error">부적절한 표현이 포함되어 있어요. 다시 작성해주세요.</p>}
 
               <button className="btn btn-primary btn-large" onClick={handleSubmit} disabled={!text.trim() || submitting}>

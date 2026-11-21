@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabase';
 
-export default function StudentWait({ roomCode, myId, myName, onStarted }) {
+export default function StudentWait({ roomCode, myId, myName, onStarted, onRemoved }) {
   const [roomTitle, setRoomTitle] = useState('');
   const [playerCount, setPlayerCount] = useState(0);
   const onStartedRef = useRef(onStarted);
   useEffect(() => { onStartedRef.current = onStarted; }, [onStarted]);
+  const onRemovedRef = useRef(onRemoved);
+  useEffect(() => { onRemovedRef.current = onRemoved; }, [onRemoved]);
 
   useEffect(() => {
     let active = true;
@@ -19,6 +21,12 @@ export default function StudentWait({ roomCode, myId, myName, onStarted }) {
         onStartedRef.current(roomCode);
       } else if (room?.status === 'group_monitoring') {
         await findAndJoinGroupRoom();
+      } else if (room?.status === 'waiting') {
+        // 선생님이 대기실에서 내보냈는지 확인
+        const { data: me, error } = await supabase
+          .from('players').select('id').eq('id', myId).maybeSingle();
+        if (!active) return;
+        if (!error && !me) { onRemovedRef.current?.(); return; }
       }
 
       const { count } = await supabase

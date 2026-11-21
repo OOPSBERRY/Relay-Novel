@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabase';
 import ReadAloudMode from './ReadAloudMode';
+import { getTurnInfo, useTimeLeft, useAutoSkip, advanceTurn } from '../utils/turn';
 
 function GroupCard({ groupIndex, roomCode, onReadAloud, onViewStory }) {
   const [room, setRoom] = useState(null);
@@ -16,7 +17,7 @@ function GroupCard({ groupIndex, roomCode, onReadAloud, onViewStory }) {
 
       const { data: s } = await supabase
         .from('sentences').select('*')
-        .eq('room_code', roomCode).neq('skipped', true)
+        .eq('room_code', roomCode)
         .order('order_index');
       if (active) setSentences(s || []);
     }
@@ -32,8 +33,8 @@ function GroupCard({ groupIndex, roomCode, onReadAloud, onViewStory }) {
       .on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'sentences', filter: `room_code=eq.${roomCode}` },
         ({ new: s }) => {
-          if (active && s.skipped !== true)
-            setSentences(prev => [...prev, s].sort((a, b) => a.order_index - b.order_index));
+          if (active)
+            setSentences(prev => prev.some(p => p.id === s.id) ? prev : [...prev, s].sort((a, b) => a.order_index - b.order_index));
         }
       )
       .subscribe();
@@ -45,6 +46,10 @@ function GroupCard({ groupIndex, roomCode, onReadAloud, onViewStory }) {
     };
   }, [roomCode]);
 
+  // 모둠 화면에서도 시간 초과 시 자동 패스 (학생 화면이 꺼져 있어도 진행되도록)
+  const timeLeft = useTimeLeft(room);
+  useAutoSkip(roomCode, room, timeLeft, 3000);
+
   if (!room) {
     return (
       <div className="group-card group-card-loading">
@@ -54,18 +59,10 @@ function GroupCard({ groupIndex, roomCode, onReadAloud, onViewStory }) {
   }
 
   const isFinished = room.status === 'finished';
-  const hasFirstSentence = !!(room.hint && room.hint.trim());
-  const hintOffset = hasFirstSentence ? 1 : 0;
-  const playerCount = (room.player_order || []).length;
-  const sentenceCount = sentences.length;
-  const currentIdx = (sentenceCount - hintOffset) % (playerCount || 1);
-  const currentId = (room.player_order || [])[Math.max(0, currentIdx)];
-  const currentName = currentId ? (room.player_names || {})[currentId] : '';
-  const progress = sentenceCount - hintOffset;
-  const total = room.max_sentences - hintOffset;
+  const { currentIdx, currentName, progress, total } = getTurnInfo(room, sentences);
   const pct = Math.min(100, Math.round((progress / total) * 100));
-  const players = Object.values(room.player_names || {});
-  const recentSentences = sentences.slice(-3);
+  const players = (room.player_order || []).map(id => (room.player_names || {})[id]);
+  const recentSentences = sentences.filter(s => !s.skipped).slice(-3);
 
   return (
     <div className={`group-card ${isFinished ? 'group-card-finished' : ''}`}>
@@ -111,9 +108,22 @@ function GroupCard({ groupIndex, roomCode, onReadAloud, onViewStory }) {
           </button>
         </div>
       ) : (
-        <p className="group-current-writer">
-          {currentName ? `✍️ ${currentName} 쓰는 중` : '대기 중'}
-        </p>
+        <div className="group-current-row">
+          <p className="group-current-writer">
+            {currentName ? `✍️ ${currentName} 쓰는 중` : '대기 중'}
+          </p>
+          {currentName && (
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => {
+                if (!window.confirm(`${groupIndex}모둠 ${currentName} 학생의 차례를 패스하고 다음 사람으로 넘길까요?`)) return;
+                advanceTurn(roomCode, room.turn_started_at, { type: 'skip', force: true });
+              }}
+            >
+              ⏭ 차례 넘기기
+            </button>
+          )}
+        </div>
       )}
     </div>
   );

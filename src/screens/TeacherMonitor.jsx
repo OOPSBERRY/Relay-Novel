@@ -1,14 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabase';
+import { getTurnInfo, useTimeLeft, advanceTurn } from '../utils/turn';
 
 export default function TeacherMonitor({ roomCode, onFinished, onBack }) {
   const [room, setRoom] = useState(null);
   const [sentences, setSentences] = useState([]);
   const [ending, setEnding] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(null);
   const [autoSkipCount, setAutoSkipCount] = useState(null);
-  const timerInterval = useRef(null);
-  const autoSkipTimer = useRef(null);
   const skipping = useRef(false);
   const onFinishedRef = useRef(onFinished);
   useEffect(() => { onFinishedRef.current = onFinished; }, [onFinished]);
@@ -42,7 +40,7 @@ export default function TeacherMonitor({ roomCode, onFinished, onBack }) {
       .on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'sentences', filter: `room_code=eq.${roomCode}` },
         ({ new: s }) => {
-          if (active) setSentences(prev => [...prev, s].sort((a, b) => a.order_index - b.order_index));
+          if (active) setSentences(prev => prev.some(p => p.id === s.id) ? prev : [...prev, s].sort((a, b) => a.order_index - b.order_index));
         }
       )
       .subscribe();
@@ -54,39 +52,25 @@ export default function TeacherMonitor({ roomCode, onFinished, onBack }) {
     };
   }, [roomCode]);
 
-  // 타이머
-  useEffect(() => {
-    clearInterval(timerInterval.current);
-    if (!room?.turn_time_limit || !room?.turn_started_at) { setTimeLeft(null); return; }
+  const timeLeft = useTimeLeft(room);
+  const turnInfo = room ? getTurnInfo(room, sentences) : null;
 
-    function tick() {
-      const elapsed = (Date.now() - new Date(room.turn_started_at).getTime()) / 1000;
-      setTimeLeft(Math.max(0, Math.ceil(room.turn_time_limit - elapsed)));
-    }
-    tick();
-    timerInterval.current = setInterval(tick, 500);
-    return () => clearInterval(timerInterval.current);
-  }, [room?.turn_started_at, room?.turn_time_limit]);
-
-  // 시간 초과 시 자동 패스 (3초 카운트다운)
+  // 시간 초과 → 3초 카운트다운 후 자동 패스 (학생 화면과 동시에 시도해도 한 번만 넘어감)
+  const expired = timeLeft === 0 && room?.status === 'playing';
   useEffect(() => {
-    clearInterval(autoSkipTimer.current);
-    if (timeLeft !== 0 || !room?.turn_time_limit || ending || skipping.current) {
-      setAutoSkipCount(null);
-      return;
-    }
-    setAutoSkipCount(3);
+    if (!expired) { setAutoSkipCount(null); return; }
     let count = 3;
-    autoSkipTimer.current = setInterval(() => {
+    setAutoSkipCount(count);
+    const id = setInterval(() => {
       count -= 1;
-      setAutoSkipCount(count);
+      setAutoSkipCount(Math.max(0, count));
       if (count <= 0) {
-        clearInterval(autoSkipTimer.current);
-        if (!skipping.current) handleSkip();
+        clearInterval(id);
+        handleSkip();
       }
     }, 1000);
-    return () => clearInterval(autoSkipTimer.current);
-  }, [timeLeft, room?.turn_started_at]);
+    return () => clearInterval(id);
+  }, [expired, room?.turn_started_at]);
 
   async function handleForceEnd() {
     if (!window.confirm('소설을 지금 끝낼까요?')) return;
@@ -94,37 +78,24 @@ export default function TeacherMonitor({ roomCode, onFinished, onBack }) {
     await supabase.from('rooms').update({ status: 'finished' }).eq('code', roomCode);
   }
 
-  async function handleSkip() {
+  async function handleSkip({ force = false } = {}) {
     if (!room || skipping.current) return;
     skipping.current = true;
     setAutoSkipCount(null);
-    const orderIndex = sentences.length;
-    const isLast = orderIndex + 1 >= room.max_sentences;
-    await supabase.from('sentences').insert({
-      room_code: roomCode,
-      text: '(패스)',
-      player_name: currentName,
-      order_index: orderIndex,
-      skipped: true,
-    });
-    await supabase.from('rooms').update({
-      turn_started_at: new Date().toISOString(),
-      ...(isLast ? { status: 'finished' } : {}),
-    }).eq('code', roomCode);
+    await advanceTurn(roomCode, room.turn_started_at, { type: 'skip', force });
     skipping.current = false;
+  }
+
+  // 자리를 비운 학생 등: 시간과 상관없이 교사가 차례를 넘긴다
+  function handleManualSkip() {
+    const name = room ? getTurnInfo(room, sentences).currentName : '';
+    if (!window.confirm(`${name} 학생의 차례를 패스하고 다음 사람으로 넘길까요?`)) return;
+    handleSkip({ force: true });
   }
 
   if (!room) return <div className="screen screen-center"><p className="muted">불러오는 중...</p></div>;
 
-  const hasFirstSentence = !!(room.hint && room.hint.trim());
-  const hintOffset = hasFirstSentence ? 1 : 0;
-  const playerCount = room.player_order.length || 1;
-  const realSentences = sentences.filter(s => !s.skipped);
-  const currentIdx = (realSentences.length - hintOffset) % playerCount;
-  const currentId = room.player_order[Math.max(0, currentIdx)];
-  const currentName = room.player_names[currentId] || '';
-  const progress = realSentences.length - hintOffset;
-  const total = room.max_sentences - hintOffset;
+  const { currentIdx, currentName, progress, total } = turnInfo;
   const isTimeUp = timeLeft !== null && timeLeft <= 0;
   const isWarning = timeLeft !== null && timeLeft <= 30 && timeLeft > 0;
 
@@ -144,15 +115,19 @@ export default function TeacherMonitor({ roomCode, onFinished, onBack }) {
           </div>
         </div>
         <div className="monitor-actions">
-          {isTimeUp && (
+          {isTimeUp ? (
             <div className="auto-skip-wrap">
               {autoSkipCount !== null && (
                 <span className="auto-skip-count">{autoSkipCount}초 후 자동 패스</span>
               )}
-              <button className="btn btn-primary btn-sm" onClick={handleSkip}>
+              <button className="btn btn-primary btn-sm" onClick={() => handleSkip()}>
                 ⏭ 지금 넘기기
               </button>
             </div>
+          ) : (
+            <button className="btn btn-ghost btn-sm" onClick={handleManualSkip}>
+              ⏭ 차례 넘기기
+            </button>
           )}
           <button className="btn btn-danger btn-sm" onClick={handleForceEnd} disabled={ending}>
             이야기 끝내기

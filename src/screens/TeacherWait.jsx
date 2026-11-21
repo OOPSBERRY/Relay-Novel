@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabase';
 import ProjectorMode from './ProjectorMode';
+import { serverNow } from '../utils/turn';
 
 async function generateUniqueRoomCode() {
   for (let i = 0; i < 20; i++) {
@@ -60,7 +61,9 @@ export default function TeacherWait({ roomCode, onStarted, onGroupStarted, onBac
       )
       .on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'players', filter: `room_code=eq.${roomCode}` },
-        ({ new: player }) => { if (active) setPlayers(prev => [...prev, player]); }
+        ({ new: player }) => {
+          if (active) setPlayers(prev => prev.some(p => p.id === player.id) ? prev : [...prev, player]);
+        }
       )
       .subscribe();
 
@@ -71,6 +74,18 @@ export default function TeacherWait({ roomCode, onStarted, onGroupStarted, onBac
     };
   }, [roomCode]);
 
+  // 이름을 잘못 입력한 학생 등을 대기실에서 내보내기
+  async function handleRemovePlayer(player) {
+    if (starting) return;
+    if (!window.confirm(`'${player.name}' 학생을 내보낼까요?\n학생 화면은 입장 화면으로 돌아갑니다.`)) return;
+    setPlayers(prev => prev.filter(p => p.id !== player.id));
+    const { error } = await supabase.from('players').delete().eq('id', player.id).eq('room_code', roomCode);
+    if (error) {
+      alert('내보내지 못했어요. 다시 시도해주세요.');
+      setPlayers(prev => prev.some(p => p.id === player.id) ? prev : [...prev, player]);
+    }
+  }
+
   async function handleStart() {
     if (players.length < 2 || starting) return;
     setStarting(true);
@@ -78,7 +93,7 @@ export default function TeacherWait({ roomCode, onStarted, onGroupStarted, onBac
     const shuffled = [...players].sort(() => Math.random() - 0.5);
     const playerOrder = shuffled.map(p => p.id);
     const playerNames = Object.fromEntries(shuffled.map(p => [p.id, p.name]));
-    const now = new Date().toISOString();
+    const now = new Date(serverNow()).toISOString();
     const hasFirst = !!(roomData.hint && roomData.hint.trim());
 
     if (hasFirst) {
@@ -110,7 +125,7 @@ export default function TeacherWait({ roomCode, onStarted, onGroupStarted, onBac
         shuffled.filter((_, j) => j % groupCount === i)
       );
 
-      const now = new Date().toISOString();
+      const now = new Date(serverNow()).toISOString();
       const hasFirst = !!(roomData.hint && roomData.hint.trim());
 
       // 모둠 코드 미리 생성 (순서 보장 필요)
@@ -208,6 +223,15 @@ export default function TeacherWait({ roomCode, onStarted, onGroupStarted, onBac
                 <li key={p.id} className="player-item">
                   <span className="player-dot" />
                   {p.name}
+                  <button
+                    className="player-remove"
+                    onClick={() => handleRemovePlayer(p)}
+                    disabled={starting}
+                    aria-label={`${p.name} 내보내기`}
+                    title="내보내기"
+                  >
+                    ✕
+                  </button>
                 </li>
               ))}
             </ul>
@@ -285,6 +309,7 @@ export default function TeacherWait({ roomCode, onStarted, onGroupStarted, onBac
           roomCode={roomCode}
           roomTitle={roomData?.title || ''}
           players={players}
+          onRemovePlayer={handleRemovePlayer}
           onClose={() => setProjector(false)}
         />
       )}
