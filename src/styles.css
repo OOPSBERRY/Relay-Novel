@@ -887,71 +887,9 @@ textarea {
   background: var(--paper);
 }
 
-.char-count { font-size: 0.8rem; color: var(--ink-faint); }
+.char-count { font-size: 0.8rem; color: var(--ink-faint); text-align: right; margin-top: -4px; }
 
 .time-up-msg { text-align: center; font-size: 1rem; color: var(--seal); padding: 18px 8px; }
-
-/* 맞춤법 검사 */
-.spell-action-row { display: flex; align-items: center; justify-content: space-between; }
-
-.btn-spell-check {
-  background: none;
-  border: 1px solid var(--rule-strong);
-  border-radius: var(--radius);
-  color: var(--ink-soft);
-  padding: 6px 12px;
-  font-size: 0.85rem;
-  cursor: pointer;
-}
-.btn-spell-check:hover:not(:disabled) { border-color: var(--ink); color: var(--ink); }
-.btn-spell-check:disabled { opacity: 0.45; cursor: not-allowed; }
-
-.spell-panel {
-  padding: 12px 14px;
-  font-size: 0.88rem;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  border-left: 2px solid var(--rule-strong);
-  background: var(--paper);
-}
-.spell-ok { border-left-color: var(--pine); background: var(--pine-wash); }
-.spell-has-errors { border-left-color: var(--ochre); background: var(--ochre-wash); }
-
-.spell-panel-msg { color: var(--ink-soft); }
-.spell-ok .spell-panel-msg { color: var(--pine); }
-
-.spell-panel-header { display: flex; align-items: center; justify-content: space-between; color: var(--ink-soft); }
-
-.btn-spell-fix-all,
-.btn-spell-fix {
-  background: var(--ink);
-  color: var(--paper);
-  border: none;
-  border-radius: var(--radius);
-  padding: 5px 12px;
-  font-size: 0.8rem;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.btn-spell-fix-all:hover,
-.btn-spell-fix:hover { background: #3A352D; }
-
-.spell-error-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 8px 10px;
-  background: var(--sheet);
-  border: 1px solid var(--rule);
-}
-
-.spell-error-words { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; flex: 1; }
-.spell-wrong { color: var(--seal); text-decoration: line-through; }
-.spell-arrow { color: var(--ink-faint); font-size: 0.8rem; }
-.spell-correct { color: var(--pine); }
-.spell-type-badge { font-size: 0.72rem; color: var(--ink-faint); border: 1px solid var(--rule); padding: 1px 6px; }
 
 /* 다른 사람 차례 */
 .waiting-turn-box {

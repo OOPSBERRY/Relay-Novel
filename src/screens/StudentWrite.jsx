@@ -11,8 +11,6 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
   const [submitting, setSubmitting] = useState(false);
   const [profanityError, setProfanityError] = useState(false);
   const [turnMissed, setTurnMissed] = useState(false);
-  const [spellResult, setSpellResult] = useState(null);
-  const [spellChecking, setSpellChecking] = useState(false);
 
   const onFinishedRef = useRef(onFinished);
   useEffect(() => { onFinishedRef.current = onFinished; }, [onFinished]);
@@ -64,40 +62,6 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
     setText(e.target.value);
     setProfanityError(false);
     setTurnMissed(false);
-    setSpellResult(null);
-  }
-
-  async function handleSpellCheck() {
-    if (!text.trim() || spellChecking) return;
-    setSpellChecking(true);
-    setSpellResult(null);
-    try {
-      const res = await fetch(`/api/spellcheck?text=${encodeURIComponent(text.trim())}`);
-      const data = await res.json();
-      if (data?.error || !data?.message?.result) {
-        setSpellResult({ error: true });
-      } else {
-        setSpellResult(data.message.result);
-      }
-    } catch {
-      setSpellResult({ error: true });
-    } finally {
-      setSpellChecking(false);
-    }
-  }
-
-  function handleFixOne(err) {
-    setText(prev => prev.replace(err.str_before, err.str_after));
-    setSpellResult(prev => prev ? { ...prev, result: (prev.result || []).filter(e => e !== err) } : null);
-  }
-
-  function handleFixAll() {
-    let fixed = text;
-    for (const err of spellErrors) {
-      fixed = fixed.replace(err.str_before, err.str_after);
-    }
-    setText(fixed);
-    setSpellResult(null);
   }
 
   // 시간 초과 → 자동 패스. 내 차례면 3초 뒤, 다른 학생 화면은 혹시 몰라 6초 뒤 대신 넘겨준다.
@@ -141,7 +105,6 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
       });
       if (result.ok) {
         setText('');
-        setSpellResult(null);
       } else if (result.reason === 'turn-changed') {
         setTurnMissed(true);
       }
@@ -157,7 +120,6 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
   const recentSentences = sentences.filter(s => !s.skipped).slice(-3);
   const isTimeUp = timeLeft !== null && timeLeft <= 0;
   const isWarning = timeLeft !== null && timeLeft <= 30 && timeLeft > 0;
-  const spellErrors = spellResult?.result ?? [];
 
   return (
     <div className="screen write-screen">
@@ -212,46 +174,7 @@ export default function StudentWrite({ roomCode, myId, myName, onFinished }) {
           ) : (
             <>
               <textarea value={text} onChange={handleTextChange} placeholder="이야기를 이어가 볼까요?" maxLength={120} rows={3} autoFocus />
-              <div className="spell-action-row">
-                <span className="char-count">{text.length} / 120자</span>
-                <button
-                  className="btn-spell-check"
-                  onClick={handleSpellCheck}
-                  disabled={!text.trim() || spellChecking}
-                >
-                  {spellChecking ? '검사 중...' : '맞춤법 검사'}
-                </button>
-              </div>
-
-              {spellResult !== null && (
-                <div className={`spell-panel ${spellResult.error || spellErrors.length > 0 ? 'spell-has-errors' : 'spell-ok'}`}>
-                  {spellResult.error ? (
-                    <p className="spell-panel-msg">맞춤법 검사 중 오류가 발생했어요.</p>
-                  ) : spellErrors.length === 0 ? (
-                    <p className="spell-panel-msg">맞춤법 이상 없어요.</p>
-                  ) : (
-                    <>
-                      <div className="spell-panel-header">
-                        <span>총 <strong>{spellErrors.length}개</strong> 수정 제안</span>
-                        <button className="btn-spell-fix-all" onClick={handleFixAll}>모두 수정</button>
-                      </div>
-                      {spellErrors.map((err, i) => (
-                        <div key={i} className="spell-error-item">
-                          <div className="spell-error-words">
-                            <span className="spell-wrong">{err.str_before}</span>
-                            <span className="spell-arrow">→</span>
-                            <span className="spell-correct">{err.str_after}</span>
-                            <span className="spell-type-badge">
-                              {err.error_idx === 1 ? '맞춤법' : err.error_idx === 2 ? '띄어쓰기' : '교정'}
-                            </span>
-                          </div>
-                          <button className="btn-spell-fix" onClick={() => handleFixOne(err)}>수정</button>
-                        </div>
-                      ))}
-                    </>
-                  )}
-                </div>
-              )}
+              <span className="char-count">{text.length} / 120자</span>
 
               {turnMissed && <p className="error">시간이 지나 차례가 넘어갔어요. 쓴 글은 그대로 남아 있어요.</p>}
               {profanityError && <p className="error">부적절한 표현이 포함되어 있어요. 다시 작성해주세요.</p>}
