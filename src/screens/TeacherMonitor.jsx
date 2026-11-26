@@ -2,11 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabase';
 import { getTurnInfo, useTimeLeft, advanceTurn } from '../utils/turn';
 import { api, errorMessage } from '../api';
+import ProjectorMode from './ProjectorMode';
 
 export default function TeacherMonitor({ roomCode, teacherPassword, onFinished, onBack }) {
   const [room, setRoom] = useState(null);
   const [sentences, setSentences] = useState([]);
   const [ending, setEnding] = useState(false);
+  const [projector, setProjector] = useState(false);
   const [autoSkipCount, setAutoSkipCount] = useState(null);
   const skipping = useRef(false);
   const onFinishedRef = useRef(onFinished);
@@ -108,6 +110,9 @@ export default function TeacherMonitor({ roomCode, teacherPassword, onFinished, 
 
   return (
     <div className="screen monitor-screen">
+      {projector && (
+        <ProjectorMode roomCode={roomCode} roomTitle={room.title} onClose={() => setProjector(false)} />
+      )}
       <div className="monitor-header">
         <div>
           <h2 className="monitor-title">{room.title}</h2>
@@ -136,6 +141,9 @@ export default function TeacherMonitor({ roomCode, teacherPassword, onFinished, 
               차례 넘기기
             </button>
           )}
+          <button className="btn btn-ghost btn-sm" onClick={() => setProjector(true)}>
+            QR 다시 띄우기
+          </button>
           <button className="btn btn-danger btn-sm" onClick={handleForceEnd} disabled={ending}>
             이야기 끝내기
           </button>

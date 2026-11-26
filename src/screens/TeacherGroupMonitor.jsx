@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabase';
 import ReadAloudMode from './ReadAloudMode';
+import ProjectorMode from './ProjectorMode';
 import { getTurnInfo, useTimeLeft, useAutoSkip, advanceTurn } from '../utils/turn';
 import { api } from '../api';
 
@@ -117,17 +118,32 @@ function GroupCard({ groupIndex, roomCode, teacherPassword, onReadAloud, onViewS
               </span>
             )}
           </p>
-          {currentName && (
+          <div className="group-card-buttons">
+            {currentName && (
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={() => {
+                  if (!window.confirm(`${groupIndex}모둠 ${currentName} 학생의 차례를 패스하고 다음 사람으로 넘길까요?`)) return;
+                  advanceTurn(roomCode, room.turn_started_at, { type: 'skip', force: true, password: teacherPassword });
+                }}
+              >
+                차례 넘기기
+              </button>
+            )}
             <button
               className="btn btn-ghost btn-sm"
-              onClick={() => {
-                if (!window.confirm(`${groupIndex}모둠 ${currentName} 학생의 차례를 패스하고 다음 사람으로 넘길까요?`)) return;
-                advanceTurn(roomCode, room.turn_started_at, { type: 'skip', force: true, password: teacherPassword });
+              onClick={async () => {
+                if (!window.confirm(`${groupIndex}모둠 이야기를 여기서 완성할까요?\n완성하면 더 이상 이어 쓸 수 없어요.`)) return;
+                try {
+                  await api.endRoom(roomCode, teacherPassword);
+                } catch {
+                  alert('이야기를 완성하지 못했어요. 다시 시도해주세요.');
+                }
               }}
             >
-              차례 넘기기
+              이야기 완성
             </button>
-          )}
+          </div>
         </div>
       )}
     </div>
@@ -137,6 +153,13 @@ function GroupCard({ groupIndex, roomCode, teacherPassword, onReadAloud, onViewS
 export default function TeacherGroupMonitor({ parentRoomCode, teacherPassword, groupRoomCodes, onViewStory, onBack }) {
   const [endingAll, setEndingAll] = useState(false);
   const [readAloud, setReadAloud] = useState(null); // { title, sentences }
+  const [projector, setProjector] = useState(false);
+  const [parentTitle, setParentTitle] = useState('');
+
+  useEffect(() => {
+    supabase.from('rooms').select('title').eq('code', parentRoomCode).single()
+      .then(({ data }) => setParentTitle(data?.title || ''));
+  }, [parentRoomCode]);
 
   async function handleReadAloud(roomCode, title) {
     const { data: s } = await supabase
@@ -157,6 +180,10 @@ export default function TeacherGroupMonitor({ parentRoomCode, teacherPassword, g
 
   return (
     <>
+      {projector && (
+        <ProjectorMode roomCode={parentRoomCode} roomTitle={parentTitle} onClose={() => setProjector(false)} />
+      )}
+
       {readAloud && (
         <ReadAloudMode
           sentences={readAloud.sentences}
@@ -172,6 +199,9 @@ export default function TeacherGroupMonitor({ parentRoomCode, teacherPassword, g
             <p className="muted">{groupRoomCodes.length}개 모둠 동시 진행 중</p>
           </div>
           <div className="monitor-actions">
+            <button className="btn btn-ghost btn-sm" onClick={() => setProjector(true)}>
+              QR 다시 띄우기
+            </button>
             <button className="btn btn-danger btn-sm" onClick={handleEndAll} disabled={endingAll}>
               모두 끝내기
             </button>

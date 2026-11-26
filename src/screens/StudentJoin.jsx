@@ -5,13 +5,15 @@ import { api, errorMessage } from '../api';
 
 const SESSION_KEY = 'relay_student_session';
 
+// 띄어쓰기 차이는 같은 이름으로 본다 ("김 민준" = "김민준")
+const sameName = (a, b) => (a || '').replace(/\s+/g, '') === (b || '').replace(/\s+/g, '');
 
 async function findPlayerInGroups(groupCodes, name) {
   for (const childCode of groupCodes) {
     const { data: child } = await supabase
-      .from('rooms').select('player_names').eq('code', childCode).single();
-    const match = Object.entries(child?.player_names || {}).find(([, n]) => n === name);
-    if (match) return { playerId: match[0], roomCode: childCode };
+      .from('rooms').select('player_names, status').eq('code', childCode).single();
+    const match = Object.entries(child?.player_names || {}).find(([, n]) => sameName(n, name));
+    if (match) return { playerId: match[0], playerName: match[1], roomCode: childCode, status: child.status };
   }
   return null;
 }
@@ -37,11 +39,11 @@ export default function StudentJoin({ initialCode = '', notice = '', onJoined, o
 
       // 진행 중인 방: 이름으로 기존 플레이어 찾아서 복구
       if (room.status === 'playing') {
-        const match = Object.entries(room.player_names || {}).find(([, n]) => n === name.trim());
+        const match = Object.entries(room.player_names || {}).find(([, n]) => sameName(n, name));
         if (match) {
-          const [playerId] = match;
-          sessionStorage.setItem(SESSION_KEY, JSON.stringify({ roomCode: code, myId: playerId, myName: name.trim() }));
-          onJoined(code, playerId, name.trim());
+          const [playerId, playerName] = match;
+          sessionStorage.setItem(SESSION_KEY, JSON.stringify({ roomCode: code, myId: playerId, myName: playerName }));
+          onJoined(code, playerId, playerName);
         } else {
           setError('이미 시작된 방이에요. 이름이 맞는지 확인하거나 선생님께 문의하세요.');
           setLoading(false);
@@ -52,9 +54,12 @@ export default function StudentJoin({ initialCode = '', notice = '', onJoined, o
       // 모둠 진행 중: 각 모둠 방에서 이름 검색
       if (room.status === 'group_monitoring') {
         const found = await findPlayerInGroups(room.player_order || [], name.trim());
-        if (found) {
-          sessionStorage.setItem(SESSION_KEY, JSON.stringify({ roomCode: found.roomCode, myId: found.playerId, myName: name.trim() }));
-          onJoined(found.roomCode, found.playerId, name.trim());
+        if (found && found.status === 'finished') {
+          setError('우리 모둠 이야기는 이미 완성됐어요. 선생님 화면에서 함께 읽어 보세요.');
+          setLoading(false);
+        } else if (found) {
+          sessionStorage.setItem(SESSION_KEY, JSON.stringify({ roomCode: found.roomCode, myId: found.playerId, myName: found.playerName }));
+          onJoined(found.roomCode, found.playerId, found.playerName);
         } else {
           setError('이미 시작된 방이에요. 이름이 맞는지 확인하거나 선생님께 문의하세요.');
           setLoading(false);

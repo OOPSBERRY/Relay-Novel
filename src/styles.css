@@ -627,6 +627,15 @@ select {
 }
 .projector-student-remove:hover { color: var(--lamp); }
 
+.projector-rejoin .projector-count { margin-left: 0; }
+
+.projector-rejoin {
+  font-size: 1.3rem;
+  line-height: 1.9;
+  color: var(--night-soft);
+  text-align: center;
+}
+
 .projector-waiting { color: var(--night-faint); font-size: 1.1rem; }
 
 @media (max-width: 760px) {
@@ -1239,7 +1248,8 @@ textarea {
 
 .group-progress-text { font-size: 0.8rem; color: var(--ink-faint); white-space: nowrap; }
 
-.group-current-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.group-current-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.group-card-buttons { display: flex; gap: 6px; }
 .group-current-writer { font-size: 0.9rem; color: var(--ink-soft); display: flex; align-items: center; gap: 10px; }
 .group-current-writer .turn-timer { font-size: 0.85rem; padding: 2px 8px; }
 
